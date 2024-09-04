@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from transformers import HfArgumentParser
-from utils import jaccard_similarity, lda_similarity
+from utils import jaccard_similarity, lda_similarity, additional_metrics
 import pandas as pd
 
 @dataclass
@@ -28,8 +28,16 @@ def main(args):
     corpus2 = df2[args.column_name].tolist()
     #corpus1, corpus2 = corpus1[:10], corpus2[:10]
 
-    print("LDA KL Divergence:", lda_similarity(corpus1, corpus2))
-    print("Jaccard Similarity:", jaccard_similarity(corpus1, corpus2))
+    lda_sim = lda_similarity(corpus1, corpus2)
+    jacc_sim = jaccard_similarity(corpus1, corpus2)
+
+    print("LDA KL Divergence:", lda_sim)
+    print("Jaccard Similarity:", jacc_sim)
+
+    average_cos_similarity, kl_divergence, js_divergence = additional_metrics(corpus1, corpus2)
+    #Saving results to a csv file   
+    results = pd.DataFrame({"Ref Data Path": [args.ref_data_path], "Base Data Path": [args.base_data_path], "LDA Similarity": [lda_sim], "Jaccard Similarity": [jacc_sim],
+                            "Average Cosine Similarity": [average_cos_similarity], "KL Divergence": [kl_divergence], "JS Divergence": [js_divergence]})
 
 if __name__ == '__main__':
     parser = HfArgumentParser((Arguments))

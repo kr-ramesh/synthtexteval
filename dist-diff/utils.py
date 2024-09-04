@@ -1,7 +1,11 @@
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.spatial.distance import jensenshannon
 from sklearn.metrics import jaccard_score
+from scipy.stats import entropy
 import numpy as np
+import pandas as pd
 
 def jaccard_similarity(corpus1, corpus2):
     """
@@ -50,3 +54,37 @@ def lda_similarity(corpus1, corpus2, n_topics=5):
     kl_div = kl_divergence(topic_distribution1, topic_distribution2)
     
     return kl_div
+
+def additional_metrics(real_texts, synthetic_texts):
+
+    all_texts = real_texts + synthetic_texts
+
+    # Vectorize the text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Split back into real and synthetic matrices
+    tfidf_real = tfidf_matrix[:len(real_texts)]
+    tfidf_synthetic = tfidf_matrix[len(real_texts):]
+
+    # Compute the average cosine similarity between real and synthetic distributions
+    cos_sim_matrix = cosine_similarity(tfidf_real, tfidf_synthetic)
+    average_cos_sim = np.mean(cos_sim_matrix)
+
+    print(f"Average Cosine Similarity: {average_cos_sim:.4f}")
+
+    # Calculate the KL divergence between the average distributions
+    real_distribution = np.mean(tfidf_real.toarray(), axis=0)
+    synthetic_distribution = np.mean(tfidf_synthetic.toarray(), axis=0)
+
+    # Adding a small constant to avoid zero issues
+    kl_divergence = entropy(real_distribution + 1e-10, synthetic_distribution + 1e-10)
+
+    print(f"KL Divergence: {kl_divergence:.4f}")
+
+    # Jensen-Shannon divergence between the distributions
+    js_divergence = jensenshannon(real_distribution, synthetic_distribution, base=2)
+
+    print(f"Jensen-Shannon Divergence: {js_divergence:.4f}")
+
+    return average_cos_sim, kl_divergence, js_divergence
