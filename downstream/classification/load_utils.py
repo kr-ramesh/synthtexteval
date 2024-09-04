@@ -180,5 +180,3 @@ def test_model(model_name = "bert-base-uncased", path_to_model ="N/A", path_to_d
       print("Saving file!")
       df = pd.DataFrame({'Predicted': pred_label_list, 'Ground': actual_label_list})
       df.to_csv(csv_output_path)
-      
-

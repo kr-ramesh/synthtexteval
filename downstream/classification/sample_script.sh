@@ -1,12 +1,3 @@
-#!/bin/bash
-
-#SBATCH --job-name="random_mul_icd_2"
-#SBATCH --time=48:00:00
-#SBATCH --account=a100acct
-#SBATCH --gres=gpu:1
-#SBATCH --partition=gpu-a100
-#SBATCH --output=inf-ops/reranked_full.txt
-
 #Sample script for training models
 foldername="princeton_mimic_10ICD_DP_8"
 python icd_classification.py \

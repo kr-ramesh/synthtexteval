@@ -56,7 +56,12 @@ def lda_similarity(corpus1, corpus2, n_topics=5):
     return kl_div
 
 def additional_metrics(real_texts, synthetic_texts):
-
+    
+    """
+        Returns the average cosine similarity, KL divergence, and Jensen-Shannon divergence 
+        between the real and synthetic text distributions.
+    """
+    
     all_texts = real_texts + synthetic_texts
 
     # Vectorize the text data using TF-IDF
