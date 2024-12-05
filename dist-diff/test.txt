@@ -1,1 +1,0 @@
-slurmstepd-c02: error: *** JOB 121472 ON c02 CANCELLED AT 2024-09-03T21:59:15 ***
