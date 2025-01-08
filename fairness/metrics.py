@@ -4,9 +4,6 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import multilabel_confusion_matrix, confusion_matrix, accuracy_score
 from downstream.classify.load_utils import evaluate_multilabel_classifier
 
-#Given a prediction file for a given model, calculate all relevant fairness metrics for the model's prediction
-#Create subset of pandas dataframes based on the column 'Subgroup', atop which you run calculate_fairness_metrics which returns a dataframe. Concatenate all these dataframes and save them to a file
-
 def calculate_tpr_fpr(TP, FP, FN, TN):    
     TPR = TP / (TP + FN)
     FPR = FP / (FP + TN)
