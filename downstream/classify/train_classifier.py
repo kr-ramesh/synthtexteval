@@ -1,4 +1,5 @@
 from load_utils import read_data, load_model, tokenize_data, evaluate_multilabel_classifier
+from datasets import concatenate_datasets
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from typing import Any, Callable, List, Optional, Union, Dict, Sequence
 from dataclasses import dataclass, field, asdict
@@ -40,6 +41,9 @@ class MiscArguments:
     dataset_name: str = field(default="mimic", metadata={
         "help": "Name of the dataset"
     })
+    path_to_dataset: Optional[str] = field(default="", metadata={
+        "help": "Path to dataset directory to be used for all data."
+    })
     path_to_train_dataset: Optional[str] = field(default="", metadata={
         "help": "Path to dataset directory to be used for training."
     })
@@ -60,6 +64,9 @@ class MiscArguments:
     })
     path_to_aggregated_results: str = field(default="inf-aggs.csv", metadata={
         "help": "Path to where the downstream metric results for a given model over the test data is saved."
+    })
+    synthetic_usage: Optional[str] = field(default="", metadata={
+        "help": "Whether and how synthetic data should be used (train augmentation, train synthetic-only, testing)"
     })
     text_field: str = field(default="text")
     label_field: str = field(default="label")
@@ -84,11 +91,13 @@ class ModelFT():
         self.training_args = args.train
 
         if(self.model_args.is_train):
-            self.dataset = read_data(data_dir = self.model_args.path_to_train_dataset, dataset_name = self.model_args.dataset_name, is_test = False)
+            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, dataset_name = self.model_args.dataset_name, is_test = False)
             self.model, self.tokenizer = load_model(model_name = self.model_args.model_name, path_to_model = self.model_args.path_to_model, problem_type = self.model_args.problem_type, n_labels = self.model_args.n_labels)
         elif(self.model_args.is_test):
-            self.dataset = read_data(data_dir = self.model_args.path_to_test_dataset, dataset_name = self.model_args.dataset_name, is_test = True)
+            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, dataset_name = self.model_args.dataset_name, is_test = True)
             self.dataset = self.dataset['test']
+            if self.model_args.synthetic_usage == 'synthetic-evaluation':
+                self.dataset = self.dataset['synthetic']
             self.model, self.tokenizer = load_model(model_name = self.model_args.model_name, path_to_model = self.model_args.path_to_model, problem_type = self.model_args.problem_type, ckpt_exists = True, n_labels = self.model_args.n_labels)
         
         self.device = "cuda"
@@ -150,7 +159,12 @@ class ModelFT():
     def finetune_model(self):
 
         print("Preprocessing dataset!")
+        
         train_dataset, eval_dataset = self.dataset['train'], self.dataset['validation']
+        if self.model_args.synthetic_usage == 'synthetic-train-augment':
+            train_dataset = concatenate_datasets([self.dataset['train'], self.dataset['synthetic']])
+        elif self.model_args.synthetic_usage == 'synthetic-train-only':
+            train_dataset = self.dataset['synthetic']
         processed_train_dataset = self.process_map(train_dataset)
         processed_eval_dataset = self.process_map(eval_dataset)
         self.model = self.model.to(self.device)
@@ -177,7 +191,7 @@ class ModelFT():
 
         trainer = Trainer(model=self.model,
                         args=self.training_args,
-                        compute_metrics= self.compute_metrics,
+                        compute_metrics=self.compute_metrics,
                         eval_dataset=processed_test_dataset,)
         
         evaluation_results = trainer.evaluate()

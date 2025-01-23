@@ -9,6 +9,7 @@ export is_test=$6
 model_name=${model_name:-"bert-base-uncased"}
 dataset_name=${dataset_name:-"stanfordnlp/sst2"}
 path_to_model=${path_to_model:-"temp/bert-base-uncased-sst2-trial"}
+path_to_dataset=${path_to_dataset:-"/home/umd-dsmolyak/scr4_afield6/umd-dsmolyak/sdg-eval-scr/data/sst2"}
 num_labels=${num_labels:-2}
 is_train=${is_train:-true}
 is_test=${is_test:-false}
@@ -22,5 +23,5 @@ python train_classifier.py \
                 --path_to_model ${path_to_model} \
                 --n_labels ${num_labels} \
                 --max_steps 10 \
-                --text_field 'sentence' \
+                --text_field 'text' \
                 --label_field 'label'
