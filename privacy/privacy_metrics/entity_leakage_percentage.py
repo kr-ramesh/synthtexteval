@@ -1,11 +1,4 @@
 def entities_in_paragraph(paragraph: str, entities: list) -> dict:
-    """
-    Checks whether each entity in `entities` appears in `paragraph`.
-    
-    :param paragraph: The text to be searched.
-    :param entities: A list of entity strings to look for in the paragraph.
-    :return: A dictionary with each entity as a key and a boolean value indicating presence.
-    """
     results = {}
     for entity in entities:
 

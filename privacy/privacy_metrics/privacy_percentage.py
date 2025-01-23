@@ -1,7 +1,5 @@
 def entity_presence(paragraph: str, entities: list, case_sensitive: bool = False) -> dict:
     results = {}
-    
-    # Optionally lower both paragraph and entities for case-insensitive matching
     if not case_sensitive:
         paragraph_lower = paragraph.lower()
         for entity in entities:
@@ -17,8 +15,7 @@ def entity_presence(paragraph: str, entities: list, case_sensitive: bool = False
 def entity_coverage_percentage(paragraph: str, entities: list, case_sensitive: bool = False) -> float:
     
     if not paragraph:
-        return 0.0  # Avoid division by zero if paragraph is empty
-    
+        return 0.0  
     search_paragraph = paragraph if case_sensitive else paragraph.lower()
 
     intervals = []
