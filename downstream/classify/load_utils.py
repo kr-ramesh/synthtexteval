@@ -1,18 +1,17 @@
 from datasets import load_dataset, load_from_disk, Features, Value, ClassLabel, Dataset, DatasetDict
 from scipy.special import softmax
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, TrainingArguments, Trainer
 from torch.utils.data import DataLoader, TensorDataset
 import torch, ast, os
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, TrainingArguments, Trainer
 import numpy as np, pandas as pd
 from sklearn.metrics import precision_score, recall_score, f1_score, hamming_loss, accuracy_score
-from datasets import load_dataset
 import os
 
 
 #TODO: Need to remove some redundant parts of the code here. Add comments wherever necessary
 #TODO: Add a dummy function and custom functionality for reading the dataset in case the user has their own format and preprocessing.
 
-def read_data(data_dir, dataset_name, is_test=True):
+def read_data(data_dir, dataset_name, is_test=True, local=True):
     """
     Function to load and return the dataset for training or the evaluation of bias.
 
@@ -20,11 +19,22 @@ def read_data(data_dir, dataset_name, is_test=True):
         - data_dir (str): Path to the data directory.
         - dataset_name (str): Name of the dataset to be loaded. If an HF dataset with this name exists, it will be loaded.
         - is_test (bool): Whether to load test data only. If False, it loads train and validation sets.
+        - local (bool): if true, loads all the data from the provided directory at data_dir.
 
     Returns:
         - dataset (DatasetDict or dict): A DatasetDict if an HF dataset is found, otherwise a dict of datasets loaded from CSV files.
     """
     print("Dataset Name: ", dataset_name)
+
+    if local:
+        dataset = load_dataset('csv', data_files={
+                "train": os.path.join(data_dir, "train.csv"),
+                "validation": os.path.join(data_dir, "validation.csv"),
+                "synthetic": os.path.join(data_dir, "synthetic.csv"),
+                "test": os.path.join(data_dir, "test.csv"),
+            })
+        print('Successfully loaded local data')
+        return dataset
     
     try:
         # Attempt to load the dataset from HF Hub
@@ -36,6 +46,7 @@ def read_data(data_dir, dataset_name, is_test=True):
             print("Loading test data")
             dataset = load_dataset('csv', data_files={"test": os.path.join(data_dir, "test.csv")})
         else:
+            # dataset = load_dataset('csv', data_files={"train": os.path.join(data_dir, "train.csv")})
             dataset = load_dataset('csv', data_files={
                 "train": os.path.join(data_dir, "train.csv"),
                 "validation": os.path.join(data_dir, "eval.csv")
@@ -119,4 +130,6 @@ def tokenize_data(tokenizer, data, class_labels, dataset_name):
 
       return input_ids, class_labels, attention_masks
       
+if __name__ == "__main__":
+    print('hello')
 
