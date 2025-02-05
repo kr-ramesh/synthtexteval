@@ -1,13 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name="train-classifier"
-#SBATCH --time=48:00:00
-#SBATCH --mem=40GB
+#SBATCH --job-name="test-classifier"
+#SBATCH --time=1:00:00
+#SBATCH --mem=8GB
 #SBATCH --gres=gpu:1
-#SBATCH --partition=a100
+#SBATCH --partition=l40s
 #SBATCH --output=temp/testing-classification.txt
-
-echo "hello there"
 
 source ../../.env/bin/activate
 
-sh train.sh bert-base-uncased stanfordnlp/imdb temp/bert-base-uncased-imdb-v1 2 True False
+sh train.sh bert-base-uncased stanfordnlp/sst2 temp/bert-base-uncased-sst2-trial /home/umd-dsmolyak/scr4_afield6/umd-dsmolyak/sdg-eval-scr/data/sst2 2 False True
