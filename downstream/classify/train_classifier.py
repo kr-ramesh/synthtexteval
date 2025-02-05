@@ -44,12 +44,12 @@ class MiscArguments:
     path_to_dataset: Optional[str] = field(default="", metadata={
         "help": "Path to dataset directory to be used for all data."
     })
-    path_to_train_dataset: Optional[str] = field(default="", metadata={
-        "help": "Path to dataset directory to be used for training."
-    })
-    path_to_test_dataset: Optional[str] = field(default="", metadata={
-        "help": "Path to dataset directory to be used for testing."
-    })
+    # path_to_train_dataset: Optional[str] = field(default="", metadata={
+    #     "help": "Path to dataset directory to be used for training."
+    # })
+    # path_to_test_dataset: Optional[str] = field(default="", metadata={
+    #     "help": "Path to dataset directory to be used for testing."
+    # })
     path_to_model: str = field(default="N/A", metadata={
         "help": "Path to HuggingFace model to be trained"
     })
