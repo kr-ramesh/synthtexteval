@@ -55,4 +55,4 @@ python run_coref_comparison.py \
         --tensorboard_dir=$temp_output_dir/tb \
 
 # clean up
-rm -rf $temp_output_dir
+#rm -rf $temp_output_dir
