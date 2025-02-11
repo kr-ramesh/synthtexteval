@@ -1,4 +1,5 @@
-from load_utils import read_data, load_model, tokenize_data, evaluate_multilabel_classifier
+from sdgeval.utils.utils import evaluate_multilabel_classifier
+from sdgeval.downstream.classify.utils import read_data, load_model, tokenize_data
 from datasets import concatenate_datasets
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from typing import Any, Callable, List, Optional, Union, Dict, Sequence
@@ -38,18 +39,9 @@ class MiscArguments:
     model_name: str = field(default="bert-base-uncased", metadata={
         "help": "Path to the model to be used for training or testing. Can be a HuggingFace model or path to an existing fine-tuned model."
     })
-    dataset_name: str = field(default="mimic", metadata={
-        "help": "Name of the dataset"
-    })
     path_to_dataset: Optional[str] = field(default="", metadata={
         "help": "Path to dataset directory to be used for all data."
     })
-    # path_to_train_dataset: Optional[str] = field(default="", metadata={
-    #     "help": "Path to dataset directory to be used for training."
-    # })
-    # path_to_test_dataset: Optional[str] = field(default="", metadata={
-    #     "help": "Path to dataset directory to be used for testing."
-    # })
     path_to_model: str = field(default="N/A", metadata={
         "help": "Path to HuggingFace model to be trained"
     })
@@ -91,13 +83,12 @@ class ModelFT():
         self.training_args = args.train
 
         if(self.model_args.is_train):
-            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, dataset_name = self.model_args.dataset_name, is_test = False)
+            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, is_test = False, is_synthetic = self.model_args.synthetic_usage)
             self.model, self.tokenizer = load_model(model_name = self.model_args.model_name, path_to_model = self.model_args.path_to_model, problem_type = self.model_args.problem_type, n_labels = self.model_args.n_labels)
+        
         elif(self.model_args.is_test):
-            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, dataset_name = self.model_args.dataset_name, is_test = True)
+            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, is_test = True)
             self.dataset = self.dataset['test']
-            if self.model_args.synthetic_usage == 'synthetic-evaluation':
-                self.dataset = self.dataset['synthetic']
             self.model, self.tokenizer = load_model(model_name = self.model_args.model_name, path_to_model = self.model_args.path_to_model, problem_type = self.model_args.problem_type, ckpt_exists = True, n_labels = self.model_args.n_labels)
         
         self.device = "cuda"
@@ -116,7 +107,7 @@ class ModelFT():
 
     def preprocess_function(self, examples):
 
-        train_input_ids, train_class_labels, train_attention_masks = tokenize_data(self.tokenizer, examples[self.model_args.text_field], examples[self.model_args.label_field], self.model_args.dataset_name)
+        train_input_ids, train_class_labels, train_attention_masks = tokenize_data(self.tokenizer, examples[self.model_args.text_field], examples[self.model_args.label_field], self.model_args.problem_type)
         examples['input_ids'] = train_input_ids
         examples['labels'] = train_class_labels
         examples['attention_mask'] = train_attention_masks

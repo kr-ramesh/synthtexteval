@@ -1,8 +1,13 @@
 import pandas as pd
+import numpy as np
 import ast
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import multilabel_confusion_matrix, confusion_matrix, accuracy_score
-from sdgeval.utils.load_utils import evaluate_multilabel_classifier
+from sdgeval.utils.utils import evaluate_multilabel_classifier
+from sklearn.metrics import f1_score
+
+#TODO: Can add support for multiclass that is not binary later. Would need to look into prior research on this.
+#TODO: For multiclass, follow the FairLearn approach and treat it as a composite of binary classification problems for now
 
 def calculate_tpr_fpr(TP, FP, FN, TN):    
     TPR = TP / (TP + FN)
@@ -21,20 +26,32 @@ def groupwise_multiclass_metrics(group):
     accuracy = accuracy_score(y_true, y_pred)
     cm = confusion_matrix(y_true, y_pred)
 
-    tn = cm.diagonal().sum()
-    fp = cm.sum(axis=0) - cm.diagonal() 
-    fn = cm.sum(axis=1) - cm.diagonal()
-    tp = cm.sum() - tn - fp - fn
+    tp, fp = cm[0][0], cm[0][1]
+    fn, tn = cm[1][0], cm[1][1]
+    #print(cm)
+    #tn = cm.diagonal().sum()
+    #fp = cm.sum(axis=0) - cm.diagonal() 
+    #fn = cm.sum(axis=1) - cm.diagonal()
+    #tp = cm.sum() - tn - fp - fn
 
     result = {'Accuracy': accuracy, 'Confusion Matrix': cm,
               'Group Type': group.name, 'Num of Samples': len(group),}
+                
+    result['f1_macro'] = f1_score(y_true, y_pred, average='macro')
+    result['f1_micro'] = f1_score(y_true, y_pred, average='micro')
+
     result['TN'], result['FP'], result['FN'], result['TP'] = tn, fp.tolist(), fn.tolist(), tp
     return result
 
 def groupwise_multilabel_metrics(group, mlb):
+    
+    try:
+        y_true = [ast.literal_eval(item) for item in list(group['Ground'])]
+        y_pred = [ast.literal_eval(item) for item in list(group['Predicted'])]
+    except:
+        y_true = list(group['Ground'])
+        y_pred = list(group['Predicted'])
 
-    y_true = [ast.literal_eval(item) for item in list(group['Ground'])]
-    y_pred = [ast.literal_eval(item) for item in list(group['Predicted'])]
     y_true = mlb.fit_transform(y_true)
     y_pred = mlb.fit_transform(y_pred)
 
@@ -94,14 +111,14 @@ def calculate_fairness_metrics(df):
     
     return result_df
 
-def groupwise_performance_and_fairness_eval(df):
+def analyze_group_fairness_performance(df, problem_type, num_classes):
 
-    performance_df = calculate_performance_metrics(df, subgroup_type = "Subgroup")
+    performance_df = calculate_performance_metrics(df, num_classes = num_classes, subgroup_type = "Subgroup", problem_type = problem_type)
     fairness_metric_df = calculate_fairness_metrics(performance_df)
     
     return performance_df, fairness_metric_df
 
 #df = pd.read_csv("predictions.csv")
-#p_df, f_df = groupwise_performance_and_fairness_eval(df)
+#p_df, f_df = analyze_group_fairness_performance(df)
 #print(p_df)
 #print(f_df)
