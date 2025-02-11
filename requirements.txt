@@ -1,7 +1,6 @@
 apex==0.9.10dev
 datasets==2.16.1
 evaluate==0.4.1
-GitPython==3.1.43
 GitPython==3.1.44
 matplotlib==3.8.4
 mauve_text==0.4.0
