@@ -58,7 +58,7 @@ class MiscArguments:
         "help": "Path to where the downstream metric results for a given model over the test data is saved."
     })
     synthetic_usage: Optional[str] = field(default="", metadata={
-        "help": "Whether and how synthetic data should be used (train augmentation, train synthetic-only, testing)"
+        "help": "Whether and how synthetic data should be used (none, train augmentation, train synthetic-only, testing)"
     })
     text_field: str = field(default="text")
     label_field: str = field(default="label")
