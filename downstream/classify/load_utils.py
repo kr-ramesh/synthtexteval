@@ -66,7 +66,7 @@ def load_model(model_name, path_to_model, n_labels, problem_type, ckpt_exists = 
             - model : Returns the model
             - tokenizer : Returns the tokenizer corresponding to the model
       """
-      if(problem_type == "mimic"):
+      if(problem_type == "mimic" or problem_type=="multi_label_classification"):
           problem_type = "multi_label_classification"
       else:
           problem_type = "single_label_classification"
@@ -129,7 +129,3 @@ def tokenize_data(tokenizer, data, class_labels, dataset_name):
         class_labels = torch.tensor(class_labels)
 
       return input_ids, class_labels, attention_masks
-      
-if __name__ == "__main__":
-    print('hello')
-
