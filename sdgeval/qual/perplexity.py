@@ -1,5 +1,5 @@
 from evaluate import load
-from arguments import LMArgs
+from sdgeval.qual.arguments import LMArgs
 import pandas as pd
 import pickle
 

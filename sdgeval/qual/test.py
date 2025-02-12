@@ -1,7 +1,7 @@
-from mauve_metric import calculate_mauve_score
-from perplexity import calculate_perplexity
-from frechet import calculate_fid_score
-from arguments import MauveArgs, LMArgs, FrechetArgs
+from sdgeval.qual.mauve_metric import calculate_mauve_score
+from sdgeval.qual.perplexity import calculate_perplexity
+from sdgeval.qual.frechet import calculate_fid_score
+from sdgeval.qual.arguments import MauveArgs, LMArgs, FrechetArgs
 import pandas as pd
 import pickle
 

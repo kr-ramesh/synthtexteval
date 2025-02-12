@@ -1,6 +1,6 @@
 from sentence_transformers import util
 from sentence_transformers import SentenceTransformer
-from arguments import FrechetArgs
+from sdgeval.qual.arguments import FrechetArgs
 from typing import List, Tuple
 import torch
 import pickle
