@@ -1,4 +1,4 @@
-from arguments import MauveArgs
+from sdgeval.qual.arguments import MauveArgs
 import mauve
 import pickle
 import pandas as pd
