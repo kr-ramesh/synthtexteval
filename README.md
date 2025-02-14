@@ -44,7 +44,7 @@ p_df, f_df = analyze_group_fairness_performance(df, problem_type = problem_type,
 
 - Privacy evaluation
 
-- Qualitative evaluation
+- Qualitative evaluation (requires an update as I've made modifications, but this is still functional)
 
 ```
 from sdgeval.qual.arguments import MauveArgs, LMArgs, FrechetArgs
@@ -58,3 +58,4 @@ result = calculate_fid_score(df, FrechetArgs)
 
 result = calculate_perplexity(df, LMArgs)
 ```
+
