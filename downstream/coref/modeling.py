@@ -1,7 +1,8 @@
 import torch
 from torch.nn import Module, Linear, LayerNorm, Dropout
 from transformers import BertPreTrainedModel, LongformerModel
-from transformers.modeling_bert import ACT2FN
+# from transformers.modeling_bert import ACT2FN
+from transformers.activations import ACT2FN
 from utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, mask_tensor
 
 

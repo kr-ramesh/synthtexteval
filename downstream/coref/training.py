@@ -3,7 +3,7 @@ import os
 import logging
 import random
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 import torch
 from coref_bucket_batch_sampler import BucketBatchSampler
 from tqdm import tqdm, trange
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def train(args, train_dataset, model, tokenizer, evaluator):
     """ Train the model """
     tb_path = os.path.join(args.tensorboard_dir, os.path.basename(args.output_dir))
-    tb_writer = SummaryWriter(tb_path, flush_secs=30)
+    # tb_writer = SummaryWriter(tb_path, flush_secs=30)
     # logger.info('Tensorboard summary path: %s' % tb_path)
     # print('[train] args.max_total_seq_len', args.max_total_seq_len)
     train_dataloader = BucketBatchSampler(train_dataset, max_total_seq_len=args.max_total_seq_len, batch_size_1=args.batch_size_1)
@@ -60,12 +60,12 @@ def train(args, train_dataset, model, tokenizer, evaluator):
         scheduler.load_state_dict(torch.load(os.path.join(args.base_model_name_or_path, "scheduler.pt")))
         loaded_saved_optimizer = True
 
-    if args.amp:
-        try:
-            from apex import amp
-        except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
+    # if args.amp:
+    #     try:
+    #         from apex import amp
+    #     except ImportError:
+    #         raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+    #     model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
 
     # multi-gpu training (should be after apex fp16 initialization)
     if args.n_gpu > 1:
@@ -162,14 +162,16 @@ def train(args, train_dataset, model, tokenizer, evaluator):
                 # Log metrics
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     logger.info(f"\nloss step {global_step}: {(tr_loss - logging_loss) / args.logging_steps}")
-                    tb_writer.add_scalar('Training_Loss', (tr_loss - logging_loss) / args.logging_steps, global_step)
+                    # tb_writer.add_scalar('Training_Loss', (tr_loss - logging_loss) / args.logging_steps, global_step)
                     for key, value in losses.items():
                         logger.info(f"\n{key}: {value}")
 
                     logging_loss = tr_loss
 
                 if args.local_rank in [-1, 0] and args.do_eval and args.eval_steps > 0 and global_step % args.eval_steps == 0:
-                    results = evaluator.evaluate(model, prefix=f'step_{global_step}', tb_writer=tb_writer, global_step=global_step)
+                    results = evaluator.evaluate(model, prefix=f'step_{global_step}', global_step=global_step)
+
+                    # results = evaluator.evaluate(model, prefix=f'step_{global_step}', tb_writer=tb_writer, global_step=global_step)
                     f1 = results["f1"]
                     if f1 > best_f1:
                         best_f1 = f1
@@ -214,7 +216,7 @@ def train(args, train_dataset, model, tokenizer, evaluator):
     with open(os.path.join(args.output_dir, f"best_f1.json"), "w") as f:
         json.dump({"best_f1": best_f1, "best_global_step": best_global_step}, f)
 
-    tb_writer.close()
+    # tb_writer.close()
     return global_step, tr_loss / global_step
 
 
