@@ -51,7 +51,6 @@ python run_coref_comparison.py \
         --dropout_prob=0.3 \
         --save_if_best \
         --top_lambda=0.4  \
-        --amp \
         --tensorboard_dir=$temp_output_dir/tb \
 
 # clean up
