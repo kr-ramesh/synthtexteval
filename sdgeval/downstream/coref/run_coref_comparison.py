@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import os
 import shutil
-import git
+#import git
 import torch
 
 from transformers import AutoConfig, AutoTokenizer, CONFIG_MAPPING, LongformerConfig, RobertaConfig
@@ -14,7 +14,7 @@ from cli import parse_args
 from training import train, set_seed
 from eval import Evaluator
 from infer import InferenceEngine
-from utils import write_meta_data
+# from utils import write_meta_data
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,10 @@ def main():
     for key, val in vars(args).items():
         logger.info(f"{key} - {val}")
 
-    try:
-        write_meta_data(args.output_dir, args)
-    except git.exc.InvalidGitRepositoryError:
-        logger.info("didn't save metadata - No git repo!")
+    #try:
+    #    write_meta_data(args.output_dir, args)
+    #except git.exc.InvalidGitRepositoryError:
+    #    logger.info("didn't save metadata - No git repo!")
 
 
     logger.info("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, amp training: %s",
@@ -77,14 +77,16 @@ def main():
         logger.warning("You are instantiating a new config instance from scratch.")
 
     if args.tokenizer_name:
-        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, cache_dir=args.cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, is_fast=False, use_fast=False)#, cache_dir=args.cache_dir)
     elif args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, cache_dir=args.cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, is_fast=False, use_fast=False)#, cache_dir=args.cache_dir)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported, but you can do it from another script, save it,"
             "and load it from here, using --tokenizer_name"
         )
+    # breakpoint()
+
 
     config_class = LongformerConfig
     base_model_prefix = "longformer"

@@ -165,6 +165,7 @@ class CorefDataset(Dataset):
         max_length += 2  # we have additional two special tokens <s>, </s>
         padded_batch = []
         for example in batch:
+            # breakpoint()
             encoded_dict = self.tokenizer.encode_plus(example[0],
                                                       add_special_tokens=True,
                                                       truncation=True,

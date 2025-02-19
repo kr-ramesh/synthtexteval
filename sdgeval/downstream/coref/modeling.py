@@ -1,7 +1,8 @@
 import torch
 from torch.nn import Module, Linear, LayerNorm, Dropout
-from transformers import BertPreTrainedModel, LongformerModel
-from transformers.modeling_bert import ACT2FN
+from transformers import BertPreTrainedModel, LongformerModel, LongformerConfig
+# from transformers.modeling_bert import ACT2FN
+from transformers.activations import ACT2FN
 from utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, mask_tensor
 
 
@@ -36,8 +37,9 @@ class S2E(BertPreTrainedModel):
         self.do_mlps = self.ffnn_size > 0
         self.ffnn_size = self.ffnn_size if self.do_mlps else config.hidden_size
         self.normalise_loss = args.normalise_loss
-
-        self.longformer = LongformerModel(config)
+        self.longformer_config = config
+        self.longformer_config._attn_implementation_internal = None
+        self.longformer = LongformerModel(self.longformer_config)
 
         self.start_mention_mlp = FullyConnectedLayer(config, config.hidden_size, self.ffnn_size, args.dropout_prob) if self.do_mlps else None
         self.end_mention_mlp = FullyConnectedLayer(config, config.hidden_size, self.ffnn_size, args.dropout_prob) if self.do_mlps else None

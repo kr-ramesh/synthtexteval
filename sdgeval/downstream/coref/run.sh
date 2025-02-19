@@ -16,10 +16,10 @@ export predict_file=$temp_output_dir/silver.jsonlines
 export predict_file_write=$temp_output_dir/silver.pred.jsonlines
 
 # download pretrained coref model
-mkdir -p $temp_output_dir
-curl -L https://www.dropbox.com/sh/7hpw662xylbmi5o/AAC3nfP4xdGAkf0UkFGzAbrja?dl=1 > temp_model.zip
-unzip temp_model.zip -d $model_dir
-rm -rf temp_model.zip
+#mkdir -p $temp_output_dir
+#curl -L https://www.dropbox.com/sh/7hpw662xylbmi5o/AAC3nfP4xdGAkf0UkFGzAbrja?dl=1 > temp_model.zip
+#unzip temp_model.zip -d $model_dir
+#rm -rf temp_model.zip
 
 # set up synthetic data
 python minimize_synth.py $synth_data_file $temp_output_dir $sample_size
@@ -51,7 +51,6 @@ python run_coref_comparison.py \
         --dropout_prob=0.3 \
         --save_if_best \
         --top_lambda=0.4  \
-        --amp \
         --tensorboard_dir=$temp_output_dir/tb \
 
 # clean up

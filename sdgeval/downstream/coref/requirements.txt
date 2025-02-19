@@ -1,6 +1,0 @@
-numpy==1.23.4
-torch==2.3.0
-transformers==3.3.1
-tensorboard==2.3.0
-GitPython==3.1.43
-scipy==1.5.2
