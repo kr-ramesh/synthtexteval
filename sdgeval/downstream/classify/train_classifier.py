@@ -39,7 +39,7 @@ class MiscArguments:
     model_name: str = field(default="bert-base-uncased", metadata={
         "help": "Path to the model to be used for training or testing. Can be a HuggingFace model or path to an existing fine-tuned model."
     })
-    path_to_dataset: Optional[str] = field(default="", metadata={
+    path_to_dataset: Optional[str] = field(default="sst2", metadata={
         "help": "Path to dataset directory to be used for all data."
     })
     path_to_model: str = field(default="N/A", metadata={
@@ -48,7 +48,7 @@ class MiscArguments:
     path_to_output_csv: str = field(default="outputs.csv", metadata={
         "help": "Path to where the downstream outputs are saved"
     })
-    n_labels: int = field(default=10, metadata={
+    n_labels: int = field(default=2, metadata={
         "help": "Number of classes in the dataset."
     })
     problem_type: str = field(default="single_label_classification", metadata={
