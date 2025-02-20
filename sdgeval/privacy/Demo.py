@@ -4,7 +4,7 @@ import csv
 import re
 from collections import defaultdict
 # Import our package
-from Metrics import entities_in_paragraph, leaked_percentage
+from privacy_metrics.Metrics import entities_in_paragraph, leaked_percentage
 
 ############################################
 # 1) LOAD AND EXTRACT DATA FROM ECHR JSON
