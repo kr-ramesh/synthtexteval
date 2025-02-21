@@ -10,7 +10,7 @@ import data_utils
 import argument_utils
 import dp_utils
 import opacus
-from load_models import SynthModels, load_dp_model
+from load_models import load_model_tokenizer, load_dp_model
 from tqdm import tqdm
 import pandas as pd
 
@@ -23,9 +23,6 @@ from torch.utils.data import DataLoader
 from pynvml import *
 
 #TODO: Change the argument variable names.
-#TODO: The LoRA arguments are at present hardcoded. This needs to change.
-#TODO: Change the way the output is saved. Make sure the num_return_sequences is an argument accepted by the user.
-#TODO: Change the function name from 'main' to something else
 
 @dataclass
 class ModelArguments:
@@ -35,7 +32,7 @@ class ModelArguments:
     dataset_name: str = field(default = "sst2", metadata={
         "help": "Dataset name in HuggingFace, e.g. 'sst2'"
     })
-    path_to_load: str = field(default = "model_directory_default", metadata={
+    path_to_load_model: str = field(default = "model_directory_default", metadata={
         "help": "Path to where the model weights are saved and need to be loaded from."
     })
     save_output_path: str = field(default = None, metadata={
@@ -44,21 +41,22 @@ class ModelArguments:
     sequence_len: int = field(default = 128, metadata={
         "help": "Maximum sequence length"
     })
+    num_return_seq: int = field(default = 5, metadata={
+        "help": "Number of generations per given input."
+    })
     enable_dp: bool = field(default = False, metadata={
         "help": "Whether or not the model is trained with DP"
     })
-    path_to_dataset: str = field(default = "data1.csv", metadata={
+    path_to_dataset: str = field(metadata={
         "help": "Path to the dataset."
     })
-    path_to_test_dataset: str = field(default = "data1.csv", metadata={
-        "help": "Path to the dataset for inference."
+    path_to_test_dataset: str = field(metadata={
+        "help": "Path to the dataset for inference. Can be used if the dataset being tested over is outside of an existing directory."
     })
-    num_codes: int = field(default = 5, metadata={
-        "help": "Number of control codes to sample from. 0 if you want all control codes."
+    inference: bool = field(default=False, metadata={
+        "help": "Whether or not to enable the inference part of the pipeline."
     })
-    num_samples: int = field(default = 500, metadata={
-        "help": "Number of samples to take into account for training on a balanced dataset."
-    })
+    
 
     
 @dataclass
@@ -101,21 +99,7 @@ class Arguments:
     model: ModelArguments
     lora: LoraArguments
 
-def compare_models(model_1, model_2):
-    models_differ = 0
-    for key_item_1, key_item_2 in zip(model_1.state_dict().items(), model_2.state_dict().items()):
-        if torch.equal(key_item_1[1], key_item_2[1]):
-            pass
-        else:
-            models_differ += 1
-            if (key_item_1[0] == key_item_2[0]):
-                print('Mismtach found at', key_item_1[0])
-            else:
-                raise Exception
-    if models_differ == 0:
-        print('Models match perfectly! :)')
-
-def main(args: Arguments):
+def inference(args: Arguments):
     #torch.cuda.init()
     #gpu_index = 1
     #torch.cuda.set_device(gpu_index)
@@ -123,14 +107,11 @@ def main(args: Arguments):
     transformers.set_seed(args.train.seed)
     
     # Load model and tokenizer
-    obj = SynthModels(model_name = args.model.model_name, model_type = "causal")
-    model = obj.model
-    tokenizer = obj.tokenizer
+    model, tokenizer = load_model_tokenizer(args.model.model_name)
 
     # Load dataset
-    dataset = data_utils.ALL_DATASETS[args.model.dataset_name](tokenizer, args, inference = True)
-                                                               #sequence_len = args.model.sequence_len, num_samples = args.model.num_samples, 
-                                                            #path_to_dataset = args.model.path_to_dataset, num_codes = args.model.num_codes, inference = True)
+    dataset = data_utils.ALL_DATASETS[args.model.dataset_name](args, tokenizer)
+
     if dataset.classes is not None:
         target_max_len = dataset.target_max_len()
 
@@ -141,22 +122,22 @@ def main(args: Arguments):
             remove_columns=dataset.dataset.column_names['train']
         )
 
-
     if args.lora.enable_lora:
         print("Using LoRA")
         if(args.model.enable_dp):
-            model.load_adapter(args.model.path_to_load + '_dir')
+            model.load_adapter(args.model.path_to_load_model + '_dir')
         else:
-            model.load_adapter(args.model.path_to_load)
+            model.load_adapter(args.model.path_to_load_model)
     else:
         print("Not using LoRA")
 
     if train_args.local_rank == 0:
         print(f"Total number of parameters of the model: {model.num_parameters(only_trainable=False)}")
         print(f"Fine-tuned number of parameters of the model: {model.num_parameters(only_trainable=True)}")
+    
     if(args.model.enable_dp):
         print("Differentially Private Training: True")
-        model = load_dp_model(model, args.model.path_to_load)
+        model = load_dp_model(model, args.model.path_to_load_model)
 
         trainer = Trainer(
             args=train_args,
@@ -168,13 +149,12 @@ def main(args: Arguments):
 
         print("DP model has been loaded!")
 
-        df = dataset.compute_test_metrics(trainer)
+        df = dataset.compute_test_metrics(trainer, num_return_seq = args.model.num_return_seq)
         print("Saving results to file!")
         try:
             df.to_csv(args.model.save_output_path + '.csv')
         except:
-            df.to_csv(args.model.path_to_load.replace('/', '_') + '_DP_' + str(args.model.enable_dp) + '_' + str(args.model.dataset_name) +  '.csv', mode='w', index=False)
-    
+            df.to_csv(args.model.path_to_load_model.replace('/', '_') + '_DP_' + str(args.model.enable_dp) + '_' + str(args.model.dataset_name) +  '.csv', mode='w', index=False)    
     else:
         print("Differentially Private Training: False")
         trainer = Trainer(
@@ -185,19 +165,20 @@ def main(args: Arguments):
             compute_metrics=dataset.compute_metrics,
             preprocess_logits_for_metrics=dataset.preprocess_logits_for_metrics,)
         
-        #trainer.model.from_pretrained(args.model.path_to_load)
+        #trainer.model.from_pretrained(args.model.path_to_load_model)
 
         print("Model has been loaded!")
         
         df = dataset.compute_test_metrics(trainer)
+        
         print("Saving results to file!")
         try:
             df.to_csv(args.model.save_output_path + '.csv')
         except:
-            df.to_csv(args.model.path_to_load.replace('/', '_') + '_noDP_' + str(args.model.enable_dp) + '_' + str(args.model.dataset_name) + '.csv', mode='w', index=False, header=False)
+            df.to_csv(args.model.path_to_load_model.replace('/', '_') + '_noDP_' + str(args.model.enable_dp) + '_' + str(args.model.dataset_name) + '.csv', mode='w', index=False, header=False)
         
         
 if __name__ == "__main__":
     arg_parser = transformers.HfArgumentParser((argument_utils.TrainingArguments, argument_utils.PrivacyArguments, ModelArguments, LoraArguments))
     train_args, privacy_args, model_args, lora_args = arg_parser.parse_args_into_dataclasses()
-    main(Arguments(train=train_args, privacy=privacy_args, model=model_args, lora=lora_args))
+    inference(Arguments(train=train_args, privacy=privacy_args, model=model_args, lora=lora_args))

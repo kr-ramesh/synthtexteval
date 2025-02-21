@@ -4,12 +4,11 @@ import evaluate
 import torch
 import numpy as np
 import pandas as pd
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, load_dataset
 import random
 import os, re
 
 #TODO: Format the control code part of this
-#TODO: Create a generalizable format - do we really need to create the control codes on our own? Assume the user already has this information, otherwise it overcomplicates the setup.
 
 # Modified from https://huggingface.co/docs/peft/task_guides/clm-prompt-tuning
 def main_preprocess_function(examples, tokenizer, text_field, prompt_begin, prompt_end, label_field, sequence_len, single_token=True):
@@ -66,7 +65,6 @@ class CustomDataset:
     prompt_end = None # Prompt to add to the end of the text, e.g. " Label :"
     label_field = None # Name of the field in the dataset that contains the label
     evaluate = None # Evaluation metric
-    run_test = False # Whether to run test set evaluation
 
     def __init__(self, tokenizer, sequence_len):
         self.tokenizer = tokenizer
@@ -112,11 +110,14 @@ class CustomDataset:
     def compute_test_metrics(self, trainer, num_return_seq = 6):
         print("Testing for the entire dataset. Number of generations per prompt: ", num_return_seq)
         
-        df = pd.read_csv(self.path_to_test_dataset)
-        df = df[df[self.text_field].notna()]
-        test_dataset = Dataset.from_pandas(df)
+        if not self.dataset['test']:
+            df = pd.read_csv(self.path_to_test_dataset)
+            df = df[df[self.text_field].notna()]
+            test_dataset = Dataset.from_pandas(df)
+        else:
+            test_dataset = self.dataset['test']
         print("Length of test data", len(test_dataset))
-        
+            
         #OPT: Adjust the number of samples that you can test the model on
         #test_dataset = test_dataset.shuffle().select(range(10))
         # Add prompt_begin and prompt_end
@@ -222,124 +223,70 @@ class CustomDataset:
         input_data = [trainer.tokenizer.decode(r.squeeze(), skip_special_tokens=True)
                       for r in test_dataset["input_ids"] for rep in range(num_return_seq)] #TODO: Return num_sequences in place of 3 in the range
 
-        df = pd.DataFrame({'Code': input_data, 'Outputs': responses})
+        df = pd.DataFrame({'Input Prompt': input_data, 'Output Text': responses})
         return df
-    
 
-class MIMIC(CustomDataset):
+        def split_dataset(path_to_dataset, train_frac=0.8, test_frac=0.1, random_state=42):
+            
+            """
+            Arguments:
+                path_to_dataset (str): Path to the CSV dataset.
+                train_frac (float): Fraction of data to use for training (default: 0.8).
+                test_frac (float): Fraction of data to use for testing (default: 0.1).
+                random_state (int, optional): Seed for reproducibility.
+            """
+            df = pd.read_csv(path_to_dataset)
+            df_train = df.sample(frac=train_frac, random_state=random_state)
+            df_rem = df.drop(df_train.index)
+            test_eval_split = test_frac / (1 - train_frac)
+            df_test = df_rem.sample(frac=test_eval_split, random_state=random_state)
+            df_eval = df_rem.drop(df_test.index)
+            
+            return df_train, df_test, df_eval
 
-    def __init__(self, tokenizer, sequence_len, num_samples, path_to_dataset, path_to_model = "N/A", train_eval_split = 0.95, num_codes = None, is_balanced = False, inference = False):
 
-        #OPT: Adjust the number of samples that you can train the model on
-        #num_samples only matters if you want a balanced dataset
+class HFDataset(CustomDataset):
 
-        self.path_to_model = path_to_model
-        self.path_to_dataset = path_to_dataset
-        self.control_field = "ICD9_CODE"
-        self.text_field = 'LONG_TITLE'
-        self.prompt_begin = "Diagnosis: "
-        self.prompt_end = " Summary :"
-        self.label_field = 'TEXT'
+    def __init__(self, args, tokenizer):
+
+        self.dataset = load_dataset(args.model.path_to_dataset)
+        self.control_field = args.model.control_field
+        self.text_field = args.model.text_field
+        self.prompt_begin = args.model.prompt_begin
+        self.prompt_end = args.model.prompt_end
+        self.label_field = args.model.label_field
         self.evaluate = evaluate.load("rouge")
-        self.run_test = True
+                
+        super().__init__(tokenizer, args.model.sequence_len)
 
-        self.dataset = DatasetDict()
-        if(inference == False):
-            self.path_to_train_dataset, self.path_to_eval_dataset, self.path_to_test_dataset = self.specify_control_codes(num_codes, train_eval_split, num_samples)
-            self.dataset['validation'] = Dataset.from_pandas(pd.read_csv(self.path_to_eval_dataset))
-        else:
-            self.path_to_train_dataset = self.path_to_dataset + '/train.csv'
-            self.path_to_test_dataset = self.path_to_dataset + '/test.csv'            
-            
-            
-        self.dataset['train'] = Dataset.from_pandas(pd.read_csv(self.path_to_train_dataset))
-        
-        super().__init__(tokenizer, sequence_len)
-
-    
-    def specify_control_codes(self, num_codes, train_eval_split, sample_size, is_top_freq = 3, is_balanced = False):
-
-        #OPT: Change to accept all codes option
-        #SANITY CHECK
-        try:
-            path_to_train_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'train.csv'
-            path_to_test_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'test.csv'
-            path_to_eval_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'eval.csv'
-            os.mkdir(self.path_to_model.split("_DP")[0] + '_data/')
-        except:
-            print("Directory exists.")
-            if(os.path.isfile(path_to_test_dataset) and os.path.isfile(path_to_train_dataset) and os.path.isfile(path_to_eval_dataset)):
-                return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
-        
-        df, df2 = pd.read_csv(self.path_to_dataset), []
-        
-        #DEBUG
-        print("DEBUGGING.")
-        
-        if(is_top_freq == 0):
-            while(len(df2) < 100000):
-                print(len(df2))
-                control_codes = random.sample(df[self.control_field].unique().tolist(), num_codes)
-                df2 = df[df[self.control_field].isin(control_codes)]
-        else:
-            control_codes = df['ICD9_CODE'].value_counts()[:is_top_freq].index.tolist()
-            df2 = df[df[self.control_field].isin(control_codes)]
-
-        print("Number of control codes:", len(control_codes))
-        if(is_balanced):
-          df2 = df2.groupby(self.control_field).sample(n = sample_size)
-
-        df = df2.sample(frac = 0.95)
-        df_test = df2.drop(df.index)
-
-        df_train = df.sample(frac = train_eval_split)
-        df_eval = df.drop(df_train.index)
-
-        df_train.to_csv(path_to_train_dataset)
-        df_test.to_csv(path_to_test_dataset)
-        df_eval.to_csv(path_to_eval_dataset)
-        
-        print("Length of the training set:", len(df_train))
-        print("Length of the validation set:", len(df_eval))
-        print("Length of the test set:", len(df_test))
-
-        return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
 
 class WikiBio(CustomDataset):
 
-    def __init__(self, tokenizer, args, inference = False):
-                 #sequence_len, num_samples, path_to_dataset, path_to_model = "N/A", train_eval_split = 0.95, num_codes = None, is_balanced = False, inference = False):
-
-        #OPT: Adjust the number of samples that you can train the model on
-        #num_samples only matters if you want a balanced dataset
+    def __init__(self, args, tokenizer):
 
         self.path_to_dataset = args.model.path_to_dataset
+        #Hardcoded for custom datasets for convenience
         self.control_field = 'Name'
         self.text_field = self.control_field
         self.label_field = 'Text'
         self.prompt_begin = "Generate a biography about: "
         self.prompt_end = " Biography :"
         self.evaluate = evaluate.load("rouge")
-        self.run_test = True
 
         self.dataset = DatasetDict()
-        if(inference == False):
+        if(args.model.inference == False):
             self.path_to_model = args.model.path_to_save
             self.path_to_train_dataset, self.path_to_eval_dataset, self.path_to_test_dataset = self.specify_control_codes(sample_size = args.model.num_samples, num_codes = None, train_eval_split = 0.95)
+            self.dataset['train'] = Dataset.from_pandas(pd.read_csv(self.path_to_train_dataset))
             self.dataset['validation'] = Dataset.from_pandas(pd.read_csv(self.path_to_eval_dataset))
         else:
-            self.path_to_train_dataset = self.path_to_dataset + '/train.csv'
-            #self.path_to_test_dataset = self.path_to_dataset + '/eval.csv'            
             self.path_to_test_dataset = args.model.path_to_test_dataset
-            
-        self.dataset['train'] = Dataset.from_pandas(pd.read_csv(self.path_to_train_dataset))
         
         super().__init__(tokenizer, args.model.sequence_len)
 
     
-    def specify_control_codes(self, num_codes, train_eval_split, sample_size, is_top_freq = 5, is_balanced = True):
-        #OPT: Change to accept all codes option
-        #SANITY CHECK
+    def specify_control_codes(self):
+
         try:
             path_to_train_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'train.csv'
             path_to_test_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'test.csv'
@@ -349,15 +296,8 @@ class WikiBio(CustomDataset):
             print("Directory exists: ", path_to_train_dataset)
             if(os.path.isfile(path_to_test_dataset) and os.path.isfile(path_to_train_dataset) and os.path.isfile(path_to_eval_dataset)):
                 return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
-        
-        df2 = pd.read_csv(self.path_to_dataset)
-        
-        #print("Considering only the top 100k samples.") #TODO: Need to change this at some point
-        #df2 = df2.head(100000)
-
-        df_train = df2.sample(frac = 0.95)
-        df_test = df2.drop(df_train.index)
-        df_eval = df_test
+                
+        df_train, df_test, df_eval = self.split_dataset(self.path_to_dataset)
 
         df_train.to_csv(path_to_train_dataset)
         df_test.to_csv(path_to_test_dataset)
@@ -365,9 +305,8 @@ class WikiBio(CustomDataset):
         
         print("Length of the training set:", len(df_train))
         print("Length of the validation set:", len(df_eval))
-        #TODO: Clean up this code later, this is FactScore evaluation specific. Not sure if I need a test or validation set.
-        print("Length of the test set (test set is the same as the validation set in this case):", len(df_test))
+        print("Length of the test set :", len(df_test))
 
         return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
 
-ALL_DATASETS = {"mimic" : MIMIC, "wiki": WikiBio}
+ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio}

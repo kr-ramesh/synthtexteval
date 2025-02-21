@@ -14,18 +14,13 @@ import data_utils
 import argument_utils
 import dp_utils
 import opacus
-from load_models import SynthModels
-
+from load_models import load_model_tokenizer
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Tuple, Union
 from peft import get_peft_model, LoraConfig, TaskType, PeftModel
 from transformers import Trainer
 
 from pynvml import *
-
-#TODO: LoRA fix
-#TODO: Remove redundant arguments, etc
-#TODO: Add functionality for loading from an existing model/checkpoint.
 
 def print_gpu_utilization():
     nvmlInit()
@@ -52,15 +47,6 @@ class ModelArguments:
     enable_dp: bool = field(default = False, metadata={
         "help": "Whether to enable Differentially Private Training"
     })
-    num_codes: int = field(default = 10, metadata={
-        "help": "Number of control codes to sample from. 0 if you want all control codes."
-    })
-    num_samples: int = field(default = 20000, metadata={
-        "help": "Number of samples to take into account for training on a balanced dataset."
-    })
-    is_balanced: bool = field(default = False, metadata={
-        "help": "Enable balanced dataset training"
-    })
     path_to_dataset: str = field(default = "data1.csv", metadata={
         "help": "Path to the dataset."
     })
@@ -80,7 +66,7 @@ class LoraArguments:
     lora_dim: int = field(default=8, metadata={
         "help": "LoRA dimension"
     })
-    lora_alpha: int = field(default=8, metadata={
+    lora_alpha: int = field(default=32, metadata={
         "help": "LoRA alpha"
     })
     lora_dropout: float = field(default=0.0, metadata={
@@ -139,16 +125,11 @@ def main(args: Arguments):
     logger.info(f"Privacy parameters {privacy_args}")
 
     # Load model and tokenizer
-    obj = SynthModels(model_name = args.model.model_name, model_type = "causal")
-    model = obj.model
-    tokenizer = obj.tokenizer
+    model, tokenizer = load_model_tokenizer(args.model.model_name)
 
     # Load dataset
+    dataset = data_utils.ALL_DATASETS[args.model.dataset_name](args, tokenizer)
     
-    dataset = data_utils.ALL_DATASETS[args.model.dataset_name](tokenizer, args, inference = False)
-                                                               #sequence_len = args.model.sequence_len, 
-                                                               #num_samples = args.model.num_samples, path_to_model = args.model.path_to_save, 
-                                                               #path_to_dataset = args.model.path_to_dataset, num_codes = args.model.num_codes, is_balanced = args.model.is_balanced)
     if dataset.classes is not None:
         target_max_len = dataset.target_max_len()
         logger.info(f"Labels tokenized into max length: {target_max_len}")
@@ -163,7 +144,7 @@ def main(args: Arguments):
     if args.lora.enable_lora:
         if not args.model.load_from_ckpt:
             logger.info("Using LoRA")
-            peft_config = LoraConfig(task_type = TaskType.CAUSAL_LM, inference_mode=False, r=8, lora_alpha=32, lora_dropout=0.0)
+            peft_config = LoraConfig(task_type = TaskType.CAUSAL_LM, inference_mode=False, r=args.lora.lora_dim, lora_alpha=args.lora.lora_alpha, lora_dropout=args.lora.lora_dropout)
             model = get_peft_model(model, peft_config)
         else:
             if(args.model.enable_dp):
