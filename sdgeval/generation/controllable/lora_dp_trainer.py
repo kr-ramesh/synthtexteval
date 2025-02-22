@@ -16,8 +16,7 @@ import dp_utils
 import opacus
 from load_models import load_model_tokenizer
 from dataclasses import dataclass, field, asdict
-from typing import List, Optional, Tuple, Union
-from peft import get_peft_model, LoraConfig, TaskType, PeftModel
+from peft import get_peft_model, LoraConfig, TaskType, get_peft_model_state_dict
 from transformers import Trainer
 
 from pynvml import *
@@ -29,77 +28,8 @@ def print_gpu_utilization():
     print(f"GPU memory occupied: {info.used//1024**2} MB.")
 
 logger = logging.getLogger(__name__)
-    
-@dataclass
-class ModelArguments:
-    model_name: str = field(default = "gpt2", metadata={
-        "help": "Model name in HuggingFace, e.g. 'gpt2'"
-    })
-    dataset_name: str = field(default = "sst2", metadata={
-        "help": "Dataset name in HuggingFace, e.g. 'sst2'"
-    })
-    path_to_save: str = field(default = "model_directory_default", metadata={
-        "help": "Path to where the model weights are saved."
-    })
-    sequence_len: int = field(default = 1024, metadata={
-        "help": "Maximum sequence length"
-    })
-    enable_dp: bool = field(default = False, metadata={
-        "help": "Whether to enable Differentially Private Training"
-    })
-    path_to_dataset: str = field(default = "data1.csv", metadata={
-        "help": "Path to the dataset."
-    })
-    path_to_load: str = field(default = "model_directory_default", metadata={
-        "help": "Path to where the model weights are saved and need to be loaded from."
-    })
-    load_from_ckpt: bool = field(default = False, metadata={
-        "help": "Load from ckpt"
-    })
-    
-    
-@dataclass
-class LoraArguments:
-    enable_lora: bool = field(default=False, metadata={
-        "help": "Whether to enable LoRA"
-    })
-    lora_dim: int = field(default=8, metadata={
-        "help": "LoRA dimension"
-    })
-    lora_alpha: int = field(default=32, metadata={
-        "help": "LoRA alpha"
-    })
-    lora_dropout: float = field(default=0.0, metadata={
-        "help": "LoRA dropout"
-    })
 
-    target_modules: List[str] = field(
-        default_factory=list,
-        metadata={
-            "help": "List of module names or regex expression of the module names to replace with Lora."
-            "For example, ['q', 'v'] or '.*decoder.*(SelfAttention|EncDecAttention).*(q|v)$' "
-        },
-    )
-
-    def as_peft_config(self) -> LoraConfig:
-        if not self.enable_lora:
-            raise ValueError("LoRA is not enabled, cannot convert to LoRA config")
-        params = asdict(self)
-        params.pop("enable_lora")
-        params["r"] = params.pop("lora_dim")
-        params["target_modules"] = ast.literal_eval(params["target_modules"][0])
-        return LoraConfig(**params)
-
-
-@dataclass
-class Arguments:
-    train: argument_utils.TrainingArguments
-    privacy: argument_utils.PrivacyArguments
-    model: ModelArguments
-    lora: LoraArguments
-
-
-def main(args: Arguments):
+def main(args: argument_utils.Arguments):
     transformers.set_seed(args.train.seed)
 
     # Setup logging
@@ -109,7 +39,7 @@ def main(args: Arguments):
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-    log_level = train_args.get_process_log_level()
+    log_level = args.train.get_process_log_level()
     logger.setLevel(log_level)
     datasets.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.set_verbosity(log_level)
@@ -118,27 +48,28 @@ def main(args: Arguments):
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {train_args.local_rank}, device: {train_args.device}, n_gpu: {train_args.n_gpu}, "
-        f"distributed training: {bool(train_args.local_rank != -1)}, 16-bits training: {train_args.fp16}"
+        f"Process rank: {args.train.local_rank}, device: {args.train.device}, n_gpu: {args.train.n_gpu}, "
+        f"distributed training: {bool(args.train.local_rank != -1)}, 16-bits training: {args.train.fp16}"
     )
-    logger.info(f"Training/evaluation parameters {train_args}")
-    logger.info(f"Privacy parameters {privacy_args}")
+    logger.info(f"Training/evaluation parameters {args.train}")
+    logger.info(f"Privacy parameters {args.privacy}")
 
     # Load model and tokenizer
     model, tokenizer = load_model_tokenizer(args.model.model_name)
 
     # Load dataset
-    dataset = data_utils.ALL_DATASETS[args.model.dataset_name](args, tokenizer)
+    dataset = data_utils.ALL_DATASETS[args.data.dataset_name](args, tokenizer)
     
     if dataset.classes is not None:
         target_max_len = dataset.target_max_len()
         logger.info(f"Labels tokenized into max length: {target_max_len}")
 
     # Tokenize data
-    with train_args.main_process_first(desc="tokenizing dataset"):
+    with args.train.main_process_first(desc="tokenizing dataset"):
         dataset.dataset = dataset.dataset.map(
             dataset.preprocess_function, batched=True, num_proc=8, desc="tokenizing dataset",
-            remove_columns=dataset.dataset.column_names['train']
+            remove_columns=dataset.dataset.column_names['train'],
+            load_from_cache_file=True
         )
     
     if args.lora.enable_lora:
@@ -147,15 +78,12 @@ def main(args: Arguments):
             peft_config = LoraConfig(task_type = TaskType.CAUSAL_LM, inference_mode=False, r=args.lora.lora_dim, lora_alpha=args.lora.lora_alpha, lora_dropout=args.lora.lora_dropout)
             model = get_peft_model(model, peft_config)
         else:
-            if(args.model.enable_dp):
-                model.load_adapter(args.model.path_to_load + '_dir')
-            else:
-                model.load_adapter(args.model.path_to_load)
+            model.load_adapter(args.model.path_to_load_model)
     else:
         logger.info("Not using LoRA")
     
 
-    if train_args.local_rank == 0:
+    if args.train.local_rank == 0:
         logger.info(f"Total number of parameters of the model: {model.num_parameters(only_trainable=False)}")
         logger.info(f"Fine-tuned number of parameters of the model: {model.num_parameters(only_trainable=True)}")
     
@@ -167,17 +95,16 @@ def main(args: Arguments):
     model = model.to("cuda")
     print(model.num_parameters(only_trainable = True))
     
-    if(args.model.enable_dp):
+    if(not args.privacy.disable_dp):
         print("Differentially Private Training: True")
         trainer = dp_utils.OpacusDPTrainer(
-            args=train_args,
+            args=args.train,
             model=model,
             train_dataset=dataset.dataset['train'],
-            eval_dataset=dataset.dataset['validation'],
             tokenizer=tokenizer,
             compute_metrics=dataset.compute_metrics,
             preprocess_logits_for_metrics=dataset.preprocess_logits_for_metrics,
-            privacy_args=privacy_args,
+            privacy_args=args.privacy,
         )
         print("Trainer initialized.")
         if hasattr(trainer.model._module, "config"):
@@ -204,16 +131,15 @@ def main(args: Arguments):
             })
 
         privacy_engine = opacus.PrivacyEngine()
-        privacy_engine.save_checkpoint(path = args.model.path_to_save, module = trainer.model, optimizer = trainer.optimizer)
-        trainer.model._module.module.save_pretrained(args.model.path_to_save + '_dir')
+        privacy_engine.save_checkpoint(path = args.model.path_to_save_model + '_pvt', module = trainer.model, optimizer = trainer.optimizer)
+        trainer.model._module.save_pretrained(args.model.path_to_save_model)
     
     else:
         print("Differentially Private Training: False")
         trainer = Trainer(
-            args=train_args,
+            args=args.train,
             model=model,
             train_dataset=dataset.dataset['train'],
-            eval_dataset=dataset.dataset['validation'],
             tokenizer=tokenizer,
             compute_metrics=dataset.compute_metrics,
             preprocess_logits_for_metrics=dataset.preprocess_logits_for_metrics,)
@@ -222,9 +148,9 @@ def main(args: Arguments):
         trainer.args.gradient_checkpointing = False
         result = trainer.train()
             
-        trainer.save_model(args.model.path_to_save)
+        trainer.save_model(args.model.path_to_save_model)
 
 if __name__ == "__main__":
-    arg_parser = transformers.HfArgumentParser((argument_utils.TrainingArguments, argument_utils.PrivacyArguments, ModelArguments, LoraArguments))
-    train_args, privacy_args, model_args, lora_args = arg_parser.parse_args_into_dataclasses()
-    main(Arguments(train=train_args, privacy=privacy_args, model=model_args, lora=lora_args))
+    arg_parser = transformers.HfArgumentParser((argument_utils.TrainingArguments, argument_utils.PrivacyArguments, argument_utils.ModelArguments, argument_utils.DataArguments, argument_utils.LoraArguments))
+    train_args, privacy_args, model_args, data_args, lora_args = arg_parser.parse_args_into_dataclasses()
+    main(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))

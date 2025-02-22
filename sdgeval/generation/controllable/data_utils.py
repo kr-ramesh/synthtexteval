@@ -15,7 +15,8 @@ def main_preprocess_function(examples, tokenizer, text_field, prompt_begin, prom
     batch_size = len(examples[text_field])
 
     # Prepare the context with the text in between of prompts, e.g. "Sentence : <text> Label :"
-    inputs = [prompt_begin + x + prompt_end for x in examples[text_field]]
+    inputs = [prompt_begin + str(x) + prompt_end for x in examples[text_field]]
+
     # Prepare the prediction part
     targets = [str(x) for x in examples[label_field]]
 
@@ -107,26 +108,35 @@ class CustomDataset:
         )
         return {k: round(v, 4) for k, v in result.items()}
 
-    def compute_test_metrics(self, trainer, num_return_seq = 6):
+    def compute_test_metrics(self, trainer, num_return_seq = 5):
+        
         print("Testing for the entire dataset. Number of generations per prompt: ", num_return_seq)
         
-        if not self.dataset['test']:
+        try:
+            test_dataset = self.dataset['test']
+        except:
             df = pd.read_csv(self.path_to_test_dataset)
             df = df[df[self.text_field].notna()]
             test_dataset = Dataset.from_pandas(df)
-        else:
-            test_dataset = self.dataset['test']
+        if(trainer.args.dry_test_run):
+                test_dataset = test_dataset.select(range(5))
+                num_return_seq = 2
+
+        #Need to use this only if your text_field is 'label'
+        if(self.text_field == "label"):
+            test_dataset = test_dataset.map(lambda x: {self.text_field: test_dataset.features[self.text_field].int2str(x[self.text_field])})  
+            new_features = test_dataset.features.copy()
+            new_features[self.text_field] = datasets.Value("string")
+            test_dataset = test_dataset.cast(new_features)
+
         print("Length of test data", len(test_dataset))
-            
-        #OPT: Adjust the number of samples that you can test the model on
-        #test_dataset = test_dataset.shuffle().select(range(10))
-        # Add prompt_begin and prompt_end
+
         test_dataset = test_dataset.map(
-            lambda x: {self.text_field: [self.prompt_begin + article + self.prompt_end for article in x[self.text_field]]},
+            lambda x: {self.text_field: [self.prompt_begin + str(article) + self.prompt_end for article in x[self.text_field]]},
             batched=True,
             num_proc=None,
         )
-
+        
         # Tokenize data
         def test_preprocess_function(examples):
             model_inputs = trainer.tokenizer(examples[self.text_field], padding=False)
@@ -249,12 +259,12 @@ class HFDataset(CustomDataset):
 
     def __init__(self, args, tokenizer):
 
-        self.dataset = load_dataset(args.model.path_to_dataset)
-        self.control_field = args.model.control_field
-        self.text_field = args.model.text_field
-        self.prompt_begin = args.model.prompt_begin
-        self.prompt_end = args.model.prompt_end
-        self.label_field = args.model.label_field
+        self.dataset = load_dataset(args.data.path_to_dataset)
+        self.control_field = args.data.control_field
+        self.text_field = args.data.text_field
+        self.prompt_begin = args.data.prompt_begin
+        self.prompt_end = args.data.prompt_end
+        self.label_field = args.data.label_field
         self.evaluate = evaluate.load("rouge")
                 
         super().__init__(tokenizer, args.model.sequence_len)
@@ -264,7 +274,7 @@ class WikiBio(CustomDataset):
 
     def __init__(self, args, tokenizer):
 
-        self.path_to_dataset = args.model.path_to_dataset
+        self.path_to_dataset = args.data.path_to_dataset
         #Hardcoded for custom datasets for convenience
         self.control_field = 'Name'
         self.text_field = self.control_field
@@ -275,12 +285,12 @@ class WikiBio(CustomDataset):
 
         self.dataset = DatasetDict()
         if(args.model.inference == False):
-            self.path_to_model = args.model.path_to_save
-            self.path_to_train_dataset, self.path_to_eval_dataset, self.path_to_test_dataset = self.specify_control_codes(sample_size = args.model.num_samples, num_codes = None, train_eval_split = 0.95)
+            self.path_to_model = args.model.path_to_save_model
+            self.path_to_train_dataset, self.path_to_eval_dataset, self.path_to_test_dataset = self.specify_control_codes()
             self.dataset['train'] = Dataset.from_pandas(pd.read_csv(self.path_to_train_dataset))
             self.dataset['validation'] = Dataset.from_pandas(pd.read_csv(self.path_to_eval_dataset))
         else:
-            self.path_to_test_dataset = args.model.path_to_test_dataset
+            self.path_to_test_dataset = args.data.path_to_test_dataset
         
         super().__init__(tokenizer, args.model.sequence_len)
 

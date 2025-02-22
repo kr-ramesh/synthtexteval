@@ -37,7 +37,7 @@ def load_dp_model(model, path_to_load):
     privacy_engine = opacus.PrivacyEngine()
     model = privacy_engine._prepare_model(model)
     
-    checkpoint = torch.load(path_to_load, {})
+    checkpoint = torch.load(path_to_load, {}, weights_only = False)
     module_load_dict_kwargs = {'strict': False}
     model.load_state_dict(checkpoint["module_state_dict"], **(module_load_dict_kwargs or {}))
     
