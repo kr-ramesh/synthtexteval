@@ -236,7 +236,7 @@ class CustomDataset:
         df = pd.DataFrame({'Input Prompt': input_data, 'Output Text': responses})
         return df
 
-        def split_dataset(path_to_dataset, train_frac=0.8, test_frac=0.1, random_state=42):
+    def split_dataset(self, path_to_dataset, train_frac=0.8, test_frac=0.1, random_state=42):
             
             """
             Arguments:
@@ -302,6 +302,8 @@ class WikiBio(CustomDataset):
             path_to_test_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'test.csv'
             path_to_eval_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'eval.csv'
             os.mkdir(self.path_to_model.split("_DP")[0] + '_data/')
+            #print(path_to_train_dataset)
+            #print(self.path_to_model.split("_DP")[0] + '_data/')
         except:
             print("Directory exists: ", path_to_train_dataset)
             if(os.path.isfile(path_to_test_dataset) and os.path.isfile(path_to_train_dataset) and os.path.isfile(path_to_eval_dataset)):

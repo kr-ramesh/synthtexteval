@@ -132,7 +132,10 @@ def main(args: argument_utils.Arguments):
 
         privacy_engine = opacus.PrivacyEngine()
         privacy_engine.save_checkpoint(path = args.model.path_to_save_model + '_pvt', module = trainer.model, optimizer = trainer.optimizer)
-        trainer.model._module.save_pretrained(args.model.path_to_save_model)
+        try:
+            trainer.model._module.save_pretrained(args.model.path_to_save_model)
+        except:
+            trainer.model._module.module.save_pretrained(args.model.path_to_save_model)
     
     else:
         print("Differentially Private Training: False")
