@@ -184,7 +184,7 @@ class Classifier():
         processed_eval_dataset = self.process_map(eval_dataset)
         self.model = self.model.to(self.device)
 
-        print("Model training begins!")
+        print("Model training begins...")
 
         trainer = Trainer(model = self.model, args = self.training_args,
                           train_dataset = processed_train_dataset,
@@ -199,7 +199,7 @@ class Classifier():
         """
         Tests the model on the given dataset.
         """
-        print("Preprocessing dataset")
+        print("Preprocessing dataset...")
 
         processed_test_dataset = self.process_map(self.dataset)
         self.model = self.model.to(self.device)
@@ -212,7 +212,7 @@ class Classifier():
                         eval_dataset=processed_test_dataset,)
         
         evaluation_results = trainer.evaluate()
-        print("Evaluation results:", evaluation_results)
+        print("Evaluation results: ", evaluation_results)
         evaluation_results['model_name'] = self.model_args.path_to_model
         
         # Retain the columns in the output CSV file
@@ -236,10 +236,10 @@ if __name__ == "__main__":
         args = Arguments(train=train_args, model=model_args)
         print("Initialization...")
         if(args.model.is_train):
-          print("Training:\n")
+          print("Mode: Training:\n")
           obj = Classifier(args = args)
           obj.finetune_model()
         if(args.model.is_test):
-          print("Testing:\n")
+          print("Mode: Testing:\n")
           obj = Classifier(args = args)
           obj.test_model()

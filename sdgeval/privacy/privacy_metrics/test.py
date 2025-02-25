@@ -1,4 +1,5 @@
 from sdgeval.privacy.privacy_metrics.metrics import entity_leakage
+from sdgeval.privacy.privacy_metrics.metrics import search_phrase
 import pandas as pd
 
 fake_text = """Investigative journalist Rachel Marin thought she had seen it all, but when a whistleblower from Velkor Industries 
@@ -21,4 +22,8 @@ fake_entities = [
     "Daniel Kessler"
 ]
 
-print(entity_leakage(fake_text, fake_entities))
+#print(entity_leakage(fake_text, fake_entities))
+
+t_df = pd.DataFrame({'text': [fake_text]})
+text_field = 'text'
+search_phrase(df = t_df, patterns = fake_entities, max_window_len = 3, text_field = 'text')
