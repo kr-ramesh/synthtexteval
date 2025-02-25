@@ -18,7 +18,6 @@ import os
 os.environ["WANDB_DISABLED"] = "true"
 
 #TODO: Comment the code
-#TODO: Shift around function classes, make the code look neater
 #TODO: Change test function so that in cases where there is no ground truth available, you can just save the predictions
 
 @dataclass
@@ -78,8 +77,7 @@ def save_predictions(Y_pred, Y_true, path_to_save):
     df = pd.DataFrame({'Predicted': Y_pred, 'Ground': Y_true})
     df.to_csv(path_to_save)
 
-class ModelFT():
-
+class Classifier():
     def __init__(self, args):
 
         self.model_args = args.model
@@ -210,9 +208,9 @@ if __name__ == "__main__":
         print("Initialization...")
         if(args.model.is_train):
           print("Training:\n")
-          obj = ModelFT(args = args)
+          obj = Classifier(args = args)
           obj.finetune_model()
         if(args.model.is_test):
           print("Testing:\n")
-          obj = ModelFT(args = args)
+          obj = Classifier(args = args)
           obj.test_model()
