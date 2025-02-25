@@ -4,10 +4,10 @@ import evaluate
 import torch
 import numpy as np
 import pandas as pd
-from datasets import Dataset, DatasetDict, load_dataset
 import random
 import os, re
-
+from datasets import Dataset, DatasetDict, load_dataset
+from sdgeval.utils.utils import split_and_save_dataframe
 #TODO: Format the control code part of this
 
 # Modified from https://huggingface.co/docs/peft/task_guides/clm-prompt-tuning
@@ -120,15 +120,22 @@ class CustomDataset:
             test_dataset = Dataset.from_pandas(df)
         if(trainer.args.dry_test_run):
                 test_dataset = test_dataset.select(range(5))
-                num_return_seq = 2
+                #num_return_seq = 2
 
-        #Need to use this only if your text_field is 'label'
+        # Need to use this only if your text_field is 'label'
         if(self.text_field == "label"):
             test_dataset = test_dataset.map(lambda x: {self.text_field: test_dataset.features[self.text_field].int2str(x[self.text_field])})  
             new_features = test_dataset.features.copy()
             new_features[self.text_field] = datasets.Value("string")
             test_dataset = test_dataset.cast(new_features)
-
+        
+        # Ensuring that we retain attributes from other columns. Can add functionality later to accept this as an argument from the user.
+        retain_columns = [col for col in test_dataset.column_names if col not in [self.label_field]]
+        output_dataframe = {}
+        for col in retain_columns:
+            output_dataframe[col] = [element for element in test_dataset[col] for i in range(num_return_seq)]
+        print(output_dataframe)
+        
         print("Length of test data", len(test_dataset))
 
         test_dataset = test_dataset.map(
@@ -232,28 +239,10 @@ class CustomDataset:
                                     for r in response_tensors]
         input_data = [trainer.tokenizer.decode(r.squeeze(), skip_special_tokens=True)
                       for r in test_dataset["input_ids"] for rep in range(num_return_seq)] #TODO: Return num_sequences in place of 3 in the range
-
-        df = pd.DataFrame({'Input Prompt': input_data, 'Output Text': responses})
+        output_dataframe['input_prompt'], output_dataframe['output_text'] = input_data, responses
+        #df = pd.DataFrame({'Input Prompt': input_data, 'Output Text': responses})
+        df = pd.DataFrame(output_dataframe)
         return df
-
-    def split_dataset(self, path_to_dataset, train_frac=0.8, test_frac=0.1, random_state=42):
-            
-            """
-            Arguments:
-                path_to_dataset (str): Path to the CSV dataset.
-                train_frac (float): Fraction of data to use for training (default: 0.8).
-                test_frac (float): Fraction of data to use for testing (default: 0.1).
-                random_state (int, optional): Seed for reproducibility.
-            """
-            df = pd.read_csv(path_to_dataset)
-            df_train = df.sample(frac=train_frac, random_state=random_state)
-            df_rem = df.drop(df_train.index)
-            test_eval_split = test_frac / (1 - train_frac)
-            df_test = df_rem.sample(frac=test_eval_split, random_state=random_state)
-            df_eval = df_rem.drop(df_test.index)
-            
-            return df_train, df_test, df_eval
-
 
 class HFDataset(CustomDataset):
 
@@ -286,9 +275,7 @@ class WikiBio(CustomDataset):
         self.dataset = DatasetDict()
         if(args.model.inference == False):
             self.path_to_model = args.model.path_to_save_model
-            self.path_to_train_dataset, self.path_to_eval_dataset, self.path_to_test_dataset = self.specify_control_codes()
-            self.dataset['train'] = Dataset.from_pandas(pd.read_csv(self.path_to_train_dataset))
-            self.dataset['validation'] = Dataset.from_pandas(pd.read_csv(self.path_to_eval_dataset))
+            self.dataset['train'], self.dataset['validation'], _ = self.specify_control_codes()
         else:
             self.path_to_test_dataset = args.data.path_to_test_dataset
         
@@ -298,27 +285,20 @@ class WikiBio(CustomDataset):
     def specify_control_codes(self):
 
         try:
-            path_to_train_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'train.csv'
-            path_to_test_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'test.csv'
-            path_to_eval_dataset = self.path_to_model.split("_DP")[0] + '_data/' + 'eval.csv'
-            os.mkdir(self.path_to_model.split("_DP")[0] + '_data/')
-            #print(path_to_train_dataset)
-            #print(self.path_to_model.split("_DP")[0] + '_data/')
+            output_dir = self.path_to_model.split("_DP")[0] + '_data/'
+            path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset = output_dir + 'train.csv', output_dir + 'validation.csv', output_dir + 'test.csv'
+            os.mkdir(output_dir)
         except:
             print("Directory exists: ", path_to_train_dataset)
             if(os.path.isfile(path_to_test_dataset) and os.path.isfile(path_to_train_dataset) and os.path.isfile(path_to_eval_dataset)):
-                return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
+                return Dataset.from_pandas(path_to_train_dataset),  Dataset.from_pandas(path_to_eval_dataset),  Dataset.from_pandas(path_to_test_dataset)
                 
-        df_train, df_test, df_eval = self.split_dataset(self.path_to_dataset)
-
-        df_train.to_csv(path_to_train_dataset)
-        df_test.to_csv(path_to_test_dataset)
-        df_eval.to_csv(path_to_eval_dataset)
+        df_train, df_eval, df_test = split_and_save_dataframe(pd.read_csv(self.path_to_dataset), output_dir)
         
         print("Length of the training set:", len(df_train))
         print("Length of the validation set:", len(df_eval))
         print("Length of the test set :", len(df_test))
 
-        return path_to_train_dataset, path_to_eval_dataset, path_to_test_dataset
+        return  Dataset.from_pandas(df_train),  Dataset.from_pandas(df_eval),  Dataset.from_pandas(df_test)
 
 ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio}

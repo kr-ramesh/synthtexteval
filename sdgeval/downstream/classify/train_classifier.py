@@ -35,14 +35,14 @@ class TrainingArguments(HfTrainingArguments):
         super().__post_init__()    
 
 @dataclass
-class MiscArguments:
+class ModelArguments:
     model_name: str = field(default="bert-base-uncased", metadata={
         "help": "Path to the model to be used for training or testing. Can be a HuggingFace model or path to an existing fine-tuned model."
     })
     path_to_dataset: Optional[str] = field(default="sst2", metadata={
         "help": "Path to dataset directory to be used for all data."
     })
-    path_to_model: str = field(default="N/A", metadata={
+    path_to_model: str = field(default="temp-classifier", metadata={
         "help": "Path to HuggingFace model to be trained"
     })
     path_to_output_csv: str = field(default="outputs.csv", metadata={
@@ -60,6 +60,9 @@ class MiscArguments:
     synthetic_usage: Optional[str] = field(default="", metadata={
         "help": "Whether and how synthetic data should be used (none, train augmentation, train synthetic-only, testing)"
     })
+    retain_columns: Optional[List[str]] = field(default_factory=list, metadata={
+        "help": "Retains the column values when producing the output CSV file. The resulting CSV can be used for auditing fairness of classifiers if subgroup-pertinent columns are retained."
+    })
     text_field: str = field(default="text")
     label_field: str = field(default="label")
     is_train: Optional[bool] = field(default = False)
@@ -68,7 +71,7 @@ class MiscArguments:
 @dataclass
 class Arguments:
     train: TrainingArguments
-    model: MiscArguments
+    model: ModelArguments
 
 def save_predictions(Y_pred, Y_true, path_to_save):
     print("Saving file!")
@@ -188,6 +191,11 @@ class ModelFT():
         evaluation_results = trainer.evaluate()
         print("Evaluation results:", evaluation_results)
         evaluation_results['model_name'] = self.model_args.path_to_model
+        if(self.model_args.retain_columns):
+            results_df = pd.read_csv(self.model_args.path_to_output_csv)
+            for col_name in self.model_args.retain_columns:
+                results_df[col_name] = self.dataset[col_name]
+            results_df.to_csv(self.model_args.path_to_output_csv, index = False)
         df = pd.DataFrame([evaluation_results])
         if(os.path.exists(self.model_args.path_to_aggregated_results)):
             df.to_csv(self.model_args.path_to_aggregated_results, index=False, header = None, mode = 'a')
@@ -195,7 +203,7 @@ class ModelFT():
             df.to_csv(self.model_args.path_to_aggregated_results, index=False, mode = 'a')
 
 if __name__ == "__main__":
-        arg_parser = transformers.HfArgumentParser((TrainingArguments, MiscArguments))
+        arg_parser = transformers.HfArgumentParser((TrainingArguments, ModelArguments))
 
         train_args, model_args = arg_parser.parse_args_into_dataclasses()
         args = Arguments(train=train_args, model=model_args)

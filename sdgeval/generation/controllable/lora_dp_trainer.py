@@ -9,12 +9,11 @@ import sys
 import logging
 import torch
 import ast
-import linear
-import data_utils
-import argument_utils
-import dp_utils
+import sdgeval.generation.controllable.data_utils as data_utils
+import sdgeval.generation.controllable.argument_utils as argument_utils
+import sdgeval.generation.controllable.dp_utils as dp_utils
 import opacus
-from load_models import load_model_tokenizer
+from sdgeval.generation.controllable.load_models import load_model_tokenizer
 from dataclasses import dataclass, field, asdict
 from peft import get_peft_model, LoraConfig, TaskType, get_peft_model_state_dict
 from transformers import Trainer
@@ -29,7 +28,7 @@ def print_gpu_utilization():
 
 logger = logging.getLogger(__name__)
 
-def main(args: argument_utils.Arguments):
+def train(args: argument_utils.Arguments):
     transformers.set_seed(args.train.seed)
 
     # Setup logging
@@ -156,4 +155,4 @@ def main(args: argument_utils.Arguments):
 if __name__ == "__main__":
     arg_parser = transformers.HfArgumentParser((argument_utils.TrainingArguments, argument_utils.PrivacyArguments, argument_utils.ModelArguments, argument_utils.DataArguments, argument_utils.LoraArguments))
     train_args, privacy_args, model_args, data_args, lora_args = arg_parser.parse_args_into_dataclasses()
-    main(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))
+    train(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))

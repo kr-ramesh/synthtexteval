@@ -11,11 +11,9 @@ import os
 #TODO: Need to remove some redundant parts of the code here. Add comments wherever necessary
 #TODO: Add a dummy function and custom functionality for reading the dataset in case the user has their own format and preprocessing.
 
-
-
 def read_data(data_dir, is_test=True, is_synthetic = ''):
     """
-    Function to load and return the dataset for training or the evaluation of bias.
+    Function to load and return the dataset for training.
 
     Args:
         - data_dir (str): Path to the data directory.
@@ -27,8 +25,9 @@ def read_data(data_dir, is_test=True, is_synthetic = ''):
     """
     
     try:
-        # Attempt to load the dataset from HF Hub
+        # Attempt to load the dataset from HF Hub or directory of the correct format
         dataset = load_dataset(data_dir)
+        print(dataset)
         print(f"Successfully loaded dataset '{data_dir}' from Hugging Face Hub.")
     
     except ValueError:
@@ -38,7 +37,7 @@ def read_data(data_dir, is_test=True, is_synthetic = ''):
             dataset = load_dataset('csv', data_files={"test": os.path.join(data_dir, "test.csv")})
         else:
             print("Loading training and validation data.")
-            data_dict = {"train": os.path.join(data_dir, "train.csv"), "validation": os.path.join(data_dir, "eval.csv")}
+            data_dict = {"train": os.path.join(data_dir, "train.csv"), "validation": os.path.join(data_dir, "validation.csv")}
             if(is_synthetic):
                 print("Loading synthetic data from data directory")
                 data_dict["synthetic"] = os.path.join(data_dir, "synthetic.csv")

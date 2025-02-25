@@ -2,26 +2,23 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 @dataclass
-class DescriptorArgs:
+class TextDescriptorArgs:
     """
-    Arguments for the descriptive metrics
+    Arguments for the descriptive analysis of a set of documents.
     """
     pkl_file_path : str = field(
-        default='entity-output.pkl', metadata={"help": "Path to the file where the entity analysis results will be saved."}
+        default='entity-output.pkl', metadata={"help": "Indicates the path to the pickle file where the analysis of the entity results will be saved."}
     )
     plt_file_path : str = field(
-        default='entity-analysis.png', metadata={"help": "Path to the file containing the plot of the entity analysis."}
+        default='entity-analysis.png', metadata={"help": "Indicates the path to the png file containing the plot of the entities sorted by frequency."}
     )
     min_threshold: int = field(
-        default=10, metadata={"help": "Returns the n-least frequent entities."}
+        default=10, metadata={"help": "Indicates the lower bound of the threshold with which we return the n-least frequent entities."}
     )
     max_threshold: int = field(
-        default=10, metadata={"help": "Returns the n-most frequent entities."}
+        default=10, metadata={"help": "Indicates the upper bound of the threshold with which we return the n-most frequent entities."}
     )
     produce_plot: bool = field(
-        default=False, metadata={"help": "If set to true, a plot of the most frequent entities is generated and saved."}
-    )
-    device_id: int = field(
-        default=0, metadata={"help": "ID of the device to use for computation."}
+        default=False, metadata={"help": "If set to true, a plot of the most frequent entities is generated and saved. If set to false, no plot is generated."}
     )
     

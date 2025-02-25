@@ -1,4 +1,4 @@
-from argument_utils import TrainingArguments, PrivacyArguments, ModelArguments, DataArguments
+from sdgeval.generation.controllable.argument_utils import TrainingArguments, PrivacyArguments, ModelArguments, DataArguments
 
 def set_default_config_args():
     model_args = ModelArguments(model_name = "princeton-nlp/Sheared-LLaMA-1.3B")

@@ -3,7 +3,6 @@ import pandas as pd
 import csv
 import re
 from collections import defaultdict
-# Import our package
 from privacy_metrics.Metrics import entities_in_paragraph, leaked_percentage
 
 ############################################

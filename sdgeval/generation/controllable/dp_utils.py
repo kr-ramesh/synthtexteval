@@ -1,10 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import opacus
+import torch
 import pandas as pd
 import datasets
+import sdgeval.generation.controllable.sampler as sampler
+import sdgeval.generation.controllable.argument_utils as argument_utils
+
 from datasets import Dataset
-import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from transformers import (
@@ -12,14 +16,12 @@ from transformers import (
     DataCollatorForLanguageModeling, PreTrainedTokenizer, training_args, modeling_utils
 )
 from transformers.file_utils import is_sagemaker_mp_enabled, is_datasets_available
-import opacus
 from opacus.accountants import RDPAccountant
 from prv_accountant import Accountant as PRVAccountant
 from contextlib import contextmanager
 from typing import Any, Callable, List, Optional, Union, Dict, Sequence
 from accelerate.optimizer import AcceleratedOptimizer
 
-import sampler, argument_utils
 
 logger = logging.get_logger(__name__)
 
