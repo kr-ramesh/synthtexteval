@@ -1,8 +1,9 @@
+"""
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
+Modified from : https://github.com/microsoft/dp-transformers/
+"""
 from typing import Optional
-
 import numpy as np
 from scipy import optimize
 from transformers import TrainingArguments as HfTrainingArguments
@@ -19,6 +20,9 @@ logger = logging.get_logger(__name__)
 
 @dataclass
 class PrivacyArguments:
+    """
+    Arguments for differentially private training.
+    """
     per_sample_max_grad_norm: Optional[float] = field(default=1, metadata={"help": "Max per sample clip norm"})
     noise_multiplier: Optional[float] = field(default=None, metadata={"help": "Noise multiplier for DP training"})
     target_epsilon: Optional[float] = field(default=8, metadata={
@@ -69,6 +73,9 @@ class PrivacyArguments:
 
 @dataclass
 class TrainingArguments(HfTrainingArguments):
+    """
+    Arguments for training the generator model.
+    """
     dry_run: bool = field(
         default=False,
         metadata={"help": "Option for reducing training steps (2) and logging intervals (1) for quick sanity checking of arguments."})
@@ -91,6 +98,113 @@ class TrainingArguments(HfTrainingArguments):
         if self.disable_tqdm:
             disable_progress_bar()
 
+@dataclass
+class ModelArguments:
+    """
+    Arguments for initializing the generator model for training and inference.
+    """
+    model_name: str = field(default = "gpt2", metadata={
+        "help": "Model name in HuggingFace, e.g. 'gpt2'"
+    })
+    path_to_load_model: str = field(default = "model_directory_default", metadata={
+        "help": "Path to where the model weights are saved and need to be loaded from."
+    })
+    path_to_save_model: str = field(default = "model_directory_default", metadata={
+        "help": "Path to where the model weights are to be saved saved."
+    })
+    path_to_save_test_output: str = field(default = "test-outputs", metadata={
+        "help": "Path to saved model output CSV file."
+    })
+    sequence_len: int = field(default = 1024, metadata={
+        "help": "Maximum sequence length"
+    })
+    num_return_seq: int = field(default = 5, metadata={
+        "help": "Number of generations per given input."
+    })
+    load_from_ckpt: bool = field(default = False, metadata={
+        "help": "Load from ckpt for continual pretraining during the generator training part of the pipeline."
+    })
+    inference: bool = field(default=False, metadata={
+        "help": "Whether or not to enable the inference part of the pipeline."
+    })
+    
+@dataclass
+class DataArguments:
+    """
+    Arguments for initializing the dataset for training and inference.
+    """
+    dataset_name: str = field(default = "sst2", metadata={
+        "help": "Dataset name in HuggingFace, e.g. 'sst2'"
+    })
+    path_to_dataset: str = field(default = "/data/train.csv", metadata={
+        "help": "Path to the source dataset to be trained on."
+    })
+    path_to_test_dataset: str = field(default = "/data/test.csv", metadata={
+        "help": "Path to the dataset for inference. Can be used if the dataset being tested over is outside of an existing directory."
+    })
+    control_field: str = field(default = "label", metadata={
+        "help": "Column corresponding to the control code in the dataset."
+    })
+    text_field: str = field(default = "label", metadata={
+        "help": "Column corresponding to the control code text field in the dataset."
+    })
+    label_field: str = field(default = "text", metadata={
+        "help": "Column corresponding to the output text to be generated in the dataset."
+    })
+    prompt_begin: str = field(default = "", metadata={
+        "help": "Instructions/context preceding the input in the prompt."
+    })
+    prompt_end: str = field(default = "", metadata={
+        "help": "Instructions/context succeeding the input in the prompt."
+    })
+    
+    
+@dataclass
+class LoraArguments:
+    """
+    Arguments for initializing the LoRA module.
+    """
+    enable_lora: bool = field(default=True, metadata={
+        "help": "Whether to enable LoRA"
+    })
+    lora_dim: int = field(default=8, metadata={
+        "help": "LoRA dimension"
+    })
+    lora_alpha: int = field(default=32, metadata={
+        "help": "LoRA alpha"
+    })
+    lora_dropout: float = field(default=0.0, metadata={
+        "help": "LoRA dropout"
+    })
+
+    target_modules: List[str] = field(
+        default_factory=list,
+        metadata={
+            "help": "List of module names or regex expression of the module names to replace with Lora."
+            "For example, ['q', 'v'] or '.*decoder.*(SelfAttention|EncDecAttention).*(q|v)$' "
+        },
+    )
+
+    def as_peft_config(self) -> LoraConfig:
+        if not self.enable_lora:
+            raise ValueError("LoRA is not enabled, cannot convert to LoRA config")
+        params = asdict(self)
+        params.pop("enable_lora")
+        params["r"] = params.pop("lora_dim")
+        params["target_modules"] = ast.literal_eval(params["target_modules"][0])
+        return LoraConfig(**params)
+
+
+@dataclass
+class Arguments:
+    """
+    Arguments for the entire pipeline.
+    """
+    train: TrainingArguments
+    privacy: PrivacyArguments
+    model: ModelArguments
+    data: DataArguments
+    lora: LoraArguments
 
 def find_noise_multiplier(sampling_probability: float, num_steps: int, target_epsilon: float, target_delta: float,
                           eps_error: float=0.1) -> float:
@@ -145,99 +259,3 @@ def find_noise_multiplier(sampling_probability: float, num_steps: int, target_ep
     assert compute_epsilon(bracket[1])[2] < target_epsilon + eps_error
 
     return bracket[1]
-
-@dataclass
-class ModelArguments:
-    model_name: str = field(default = "gpt2", metadata={
-        "help": "Model name in HuggingFace, e.g. 'gpt2'"
-    })
-    path_to_load_model: str = field(default = "model_directory_default", metadata={
-        "help": "Path to where the model weights are saved and need to be loaded from."
-    })
-    path_to_save_model: str = field(default = "model_directory_default", metadata={
-        "help": "Path to where the model weights are to be saved saved."
-    })
-    path_to_save_test_output: str = field(default = "test-outputs", metadata={
-        "help": "Path to saved model output CSV file."
-    })
-    sequence_len: int = field(default = 1024, metadata={
-        "help": "Maximum sequence length"
-    })
-    num_return_seq: int = field(default = 5, metadata={
-        "help": "Number of generations per given input."
-    })
-    load_from_ckpt: bool = field(default = False, metadata={
-        "help": "Load from ckpt for continual pretraining during the generator training part of the pipeline."
-    })
-    inference: bool = field(default=False, metadata={
-        "help": "Whether or not to enable the inference part of the pipeline."
-    })
-    
-@dataclass
-class DataArguments:
-    dataset_name: str = field(default = "sst2", metadata={
-        "help": "Dataset name in HuggingFace, e.g. 'sst2'"
-    })
-    path_to_dataset: str = field(default = "/data/train.csv", metadata={
-        "help": "Path to the source dataset to be trained on."
-    })
-    path_to_test_dataset: str = field(default = "/data/test.csv", metadata={
-        "help": "Path to the dataset for inference. Can be used if the dataset being tested over is outside of an existing directory."
-    })
-    control_field: str = field(default = "label", metadata={
-        "help": "Column corresponding to the control code in the dataset."
-    })
-    text_field: str = field(default = "label", metadata={
-        "help": "Column corresponding to the control code text field in the dataset."
-    })
-    label_field: str = field(default = "text", metadata={
-        "help": "Column corresponding to the output text to be generated in the dataset."
-    })
-    prompt_begin: str = field(default = "", metadata={
-        "help": "Instructions/context preceding the input in the prompt."
-    })
-    prompt_end: str = field(default = "", metadata={
-        "help": "Instructions/context succeeding the input in the prompt."
-    })
-    
-    
-@dataclass
-class LoraArguments:
-    enable_lora: bool = field(default=True, metadata={
-        "help": "Whether to enable LoRA"
-    })
-    lora_dim: int = field(default=8, metadata={
-        "help": "LoRA dimension"
-    })
-    lora_alpha: int = field(default=32, metadata={
-        "help": "LoRA alpha"
-    })
-    lora_dropout: float = field(default=0.0, metadata={
-        "help": "LoRA dropout"
-    })
-
-    target_modules: List[str] = field(
-        default_factory=list,
-        metadata={
-            "help": "List of module names or regex expression of the module names to replace with Lora."
-            "For example, ['q', 'v'] or '.*decoder.*(SelfAttention|EncDecAttention).*(q|v)$' "
-        },
-    )
-
-    def as_peft_config(self) -> LoraConfig:
-        if not self.enable_lora:
-            raise ValueError("LoRA is not enabled, cannot convert to LoRA config")
-        params = asdict(self)
-        params.pop("enable_lora")
-        params["r"] = params.pop("lora_dim")
-        params["target_modules"] = ast.literal_eval(params["target_modules"][0])
-        return LoraConfig(**params)
-
-
-@dataclass
-class Arguments:
-    train: TrainingArguments
-    privacy: PrivacyArguments
-    model: ModelArguments
-    data: DataArguments
-    lora: LoraArguments

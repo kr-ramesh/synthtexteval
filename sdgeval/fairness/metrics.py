@@ -9,18 +9,25 @@ from sklearn.metrics import f1_score
 #TODO: Can add support for multiclass that is not binary later. Would need to look into prior research on this.
 #TODO: For multiclass, follow the FairLearn approach and treat it as a composite of binary classification problems for now
 
-def calculate_tpr_fpr(TP, FP, FN, TN):    
-    TPR = TP / (TP + FN)
-    FPR = FP / (FP + TN)
-    FNR = FN / (FN + TP)
-    TNR = TN / (TN + FP)
+def calculate_tpr_fpr(TP, FP, FN, TN):
+    """
+    Calculates the true positive rate, false positive rate, false negative rate, and true negative rate.
+    """
+    TPR, FPR = TP / (TP + FN), FP / (FP + TN)
+    FNR, TNR = FN / (FN + TP), TN / (TN + FP)
     return TPR, FPR, FNR, TNR
 
 def group_metric(lst, v_group):
+    """
+    Calculates the group fairness metric for a given group.
+    """
     result = sum([abs(v - v_group) for v in lst])
     return [result for i in range(len(lst))]
 
 def groupwise_multiclass_metrics(group):
+    """
+    Calculates the metrics for a given group in a multiclass classification setting.
+    """
     y_true, y_pred = list(group['Ground']), list(group['Predicted'])
     accuracy = accuracy_score(y_true, y_pred)
 
@@ -32,7 +39,9 @@ def groupwise_multiclass_metrics(group):
     return result
 
 def groupwise_multilabel_metrics(group, mlb):
-    
+    """
+    Calculates the metrics for a given group in a multilabel classification setting.
+    """
     try:
         y_true = [ast.literal_eval(item) for item in list(group['Ground'])]
         y_pred = [ast.literal_eval(item) for item in list(group['Predicted'])]
@@ -55,6 +64,9 @@ def groupwise_multilabel_metrics(group, mlb):
     return result
 
 def calculate_performance_metrics(df, subgroup_type, num_classes = 2, problem_type = "multilabel"):
+    """
+    Calculates the performance metrics for each subgroup.
+    """
     if(problem_type == "multilabel"):
         mlb = MultiLabelBinarizer(classes=range(num_classes))
         results = df.groupby(subgroup_type).apply(lambda group: groupwise_multilabel_metrics(group, mlb)).tolist()
@@ -66,7 +78,9 @@ def calculate_performance_metrics(df, subgroup_type, num_classes = 2, problem_ty
     return results_df    
 
 def calculate_fairness_metrics(df, problem_type):
-
+    """
+    Calculates the fairness metrics for each subgroup.
+    """
     # Read the subset results for each model type, then calculate the fairness results and save them to a new file for each subgroup
     result_df = pd.DataFrame({})
     result_df['Group Type'] = df['Group Type']
@@ -101,7 +115,9 @@ def calculate_fairness_metrics(df, problem_type):
     return result_df
 
 def analyze_group_fairness_performance(df, problem_type, num_classes, subgroup_type = "Subgroup"):
-
+    """
+    Analyzes the group fairness and performance metrics for a given dataset.
+    """
     performance_df = calculate_performance_metrics(df, num_classes = num_classes, subgroup_type = subgroup_type, problem_type = problem_type)
     fairness_metric_df = calculate_fairness_metrics(performance_df, problem_type)
     

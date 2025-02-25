@@ -70,12 +70,16 @@ def load_model(model_name, path_to_model, n_labels, problem_type, ckpt_exists = 
       return model, tokenizer
 
 def save_results_to_file(results, file_path):
+    # Save the results to a file
     with open(file_path, 'w') as f:
         for metric, value in results.items():
             f.write(f"{metric}: {value}\n")
 
 def tokenize_data(tokenizer, data, class_labels, problem_type):
-
+      """
+      Tokenizes the input data and returns the input_ids, class_labels and attention_masks
+      """
+      
       input_ids, attention_masks = [], []
 
       for k, sent in enumerate(data):

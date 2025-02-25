@@ -4,7 +4,7 @@ from typing import Optional
 @dataclass
 class TextDescriptorArgs:
     """
-    Arguments for the descriptive analysis of a set of documents.
+    Arguments for the text descriptor module.
     """
     pkl_file_path : str = field(
         default='entity-output.pkl', metadata={"help": "Indicates the path to the pickle file where the analysis of the entity results will be saved."}

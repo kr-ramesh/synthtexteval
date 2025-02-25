@@ -12,6 +12,10 @@ from sdgeval.utils.utils import split_and_save_dataframe
 
 # Modified from https://huggingface.co/docs/peft/task_guides/clm-prompt-tuning
 def main_preprocess_function(examples, tokenizer, text_field, prompt_begin, prompt_end, label_field, sequence_len, single_token=True):
+    """
+    Preprocess function for the main task of prompt tuning.
+    This function will prepare the input for the model.
+    """
     batch_size = len(examples[text_field])
 
     # Prepare the context with the text in between of prompts, e.g. "Sentence : <text> Label :"
@@ -245,7 +249,9 @@ class CustomDataset:
         return df
 
 class HFDataset(CustomDataset):
-
+    """
+    Dataset class for HuggingFace datasets.
+    """
     def __init__(self, args, tokenizer):
 
         self.dataset = load_dataset(args.data.path_to_dataset)
@@ -260,7 +266,9 @@ class HFDataset(CustomDataset):
 
 
 class WikiBio(CustomDataset):
-
+    """
+    Dataset class for WikiBio dataset.
+    """
     def __init__(self, args, tokenizer):
 
         self.path_to_dataset = args.data.path_to_dataset

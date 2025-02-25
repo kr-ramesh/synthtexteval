@@ -13,7 +13,9 @@ blacklist_words = ['none', 'none.', 'nonexistent', 'nonexistant']
 #TODO: Clean up and create a filter class.
 
 def preprocess_text(text):
-
+    """
+    Preprocesses the text data by removing special characters, converting to lowercase, removing stopwords, and lemmatizing.
+    """
     text = re.sub(r'[^a-zA-Z\s]', '', text)
     text = text.lower().strip()
     text = " ".join([word for word in str(text).split() if word not in STOPWORDS])
@@ -22,6 +24,10 @@ def preprocess_text(text):
     return text
 
 def check_repeats(text, predefined_percentage = 0.15, freq_count = 20):
+    """
+    Checks if any word is repeated more times than the frequency_limit threshold.
+    In addition to this, if any word exceeds the predefined_percentage of words in the document, we do not keep that data instance.
+    """
     words = text.split()
     total_words = len(words)
     word_counts = Counter(words)
@@ -31,6 +37,14 @@ def check_repeats(text, predefined_percentage = 0.15, freq_count = 20):
     return True
 
 def discard_data(df, discard_limit = 20, frequency_limit = 10, text_field = "CMNT_TXT"):
+    
+    """
+    Discards data based on the following criteria:
+    1. If the text field has 'None' repeated, it is removed.
+    2. If the text field has more than 400 characters, it is removed.
+    3. If any given word is repeated more times than the frequency_limit threshold, do not keep that data instance.
+    4. If any word exceeds the predefined_percentage of words in the document, we do not keep that data instance.
+    """
 
     df[text_field] = df[text_field].apply(lambda x: x.replace('None.', ''))
     df[text_field] = df[text_field].apply(lambda x: x[:x.index('None None')] if ('None None') in x else x)

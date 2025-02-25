@@ -7,18 +7,27 @@ import string
 fake_email_len = random.randrange(8, 15)
 
 def generate_random_string(length):
+    """
+    Generate a random string of fixed length. 
+    """
     # Use string.ascii_letters to include both lowercase and uppercase letters
     letters = string.ascii_letters
     random_string = ''.join(random.choice(letters) for _ in range(length))
     return random_string.lower()
 
 class CustomProvider(BaseProvider):
+    """
+    Custom provider for generating fake data.
+    """
     def case_number(self):
         return f"{random.randint(2000, 2023)}-{random.randint(1000, 9999)}"
     def email(self):
         return f"{generate_random_string(fake_email_len)}{random.randint(0, 999)}@email.com"
 
 def return_fake_item(candidate_type, fake):
+    """
+    Return a fake item based on the candidate type.
+    """
     candidate_type = candidate_type.lower()
     if(candidate_type == 'Name'.lower()):
         return fake.unique.name()
@@ -34,6 +43,9 @@ def return_fake_item(candidate_type, fake):
         return fake.phone_number()    
 
 def read_candidate_data(file_path):
+    """
+    Read candidate data from a file.
+    """
     extracted_data = {'candidate_sentence': [], 'candidate':[], 'candidate_type': []}
     
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -48,7 +60,9 @@ def read_candidate_data(file_path):
     return extracted_data
 
 def generate_candidates(candidate_output_file_path, candidate_dict, n_candidates = 100):
-    
+    """
+    Generates candidate data similar to the canary in terms of format.
+    """
     fake = Faker()
     fake.add_provider(CustomProvider)
     

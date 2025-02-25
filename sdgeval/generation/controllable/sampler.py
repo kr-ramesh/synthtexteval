@@ -1,6 +1,11 @@
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+"""
+Credits to the original source code for this module belongs to : https://github.com/microsoft/dp-transformers/
+"""
+
+
 
 import torch
 

@@ -10,7 +10,6 @@ import pandas as pd
 import sdgeval.generation.controllable.data_utils as data_utils
 import sdgeval.generation.controllable.argument_utils as argument_utils
 import sdgeval.generation.controllable.dp_utils as dp_utils
-#import sdgeval.generation.controllable.linear as linear
 from sdgeval.generation.controllable.load_models import load_model_tokenizer, load_dp_model
 from tqdm import tqdm
 
@@ -25,6 +24,9 @@ from pynvml import *
 #TODO: Change the argument variable names.
 
 def inference(args: argument_utils.Arguments):
+    """
+    Inference function for the generator model to generate synthetic data via controllable text generation.
+    """
     print(torch.cuda.current_device())
     transformers.set_seed(args.train.seed)
     

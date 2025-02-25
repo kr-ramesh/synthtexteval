@@ -11,7 +11,7 @@ from tqdm import tqdm
 @dataclass
 class CanaryArguments:
     """
-    Dataclass to store arguments for canary dataset creation and evaluation.
+    Arguments for initializing and running the canary attack evaluation.
     """
     insertion_N: str = field(default="1000", metadata={"help": "The number of insertions for each canary."})
     path_to_dataset: str = field(default=None, metadata={"help": "The path to data to be modified."})
@@ -24,13 +24,15 @@ class CanaryArguments:
     create_dataset: bool = field(default=False, metadata={"help": "If True, creates a canary dataset. If False, performs a canary attack evaluation."})
     lora_enabled: bool = field(default=False, metadata={"help": "Whether LoRA training is used."})
 
-#Creating a modified version of a dataset with canary insertions
 class Canary(Dataset):
+    """
+    Class for creating and evaluating canary attacks.
+    """
     def __init__(self, args):
         canary_dict = read_candidate_data(args.canary_file_path)
         self.canary_list = canary_dict['candidate_sentence']
         if(args.create_dataset):
-            # For creating the canary dataset
+            # For creating the dataset for training the model on the canaries.
             self.data = pd.read_csv(args.path_to_dataset)
             self.text_column = args.text_column
             self.insertion_N = args.insertion_N
@@ -39,7 +41,7 @@ class Canary(Dataset):
             self.create_canary_list()
             self.path_to_save_dataset = args.path_to_save_dataset
         else:
-            #For evaluating the model for the leakage of canaries
+            # For evaluating the model for the leakage of canaries
             self.candidates_file_path = args.candidates_file_path
             self.path_to_model = args.path_to_model
             self.model, self.tokenizer = load_model_tokenizer(model_name = args.model_name)
@@ -69,9 +71,10 @@ class Canary(Dataset):
 
     def create_dataset_training(self):
 
-          """This dataset is created explicitly for training purposes.
-          Modifies dataset using the canary_list. Inserts every canary
-          into the dataset insertion_N times."""
+          """
+          This function creates a dataset for training the model on the canaries. 
+          It inserts the canaries insertion_N times in the text_column of the dataset. 
+          """
 
           data_text = self.data[self.text_column].tolist()
           canaries = ['no_canary' for i in range(len(data_text))]
@@ -98,7 +101,11 @@ class Canary(Dataset):
 
     def create_dataset_testing(self, canary, candidate_list):
 
-          """This dataset is created explicitly for testing purposes."""
+          """
+          This function creates a dataset for evaluating the model on the canaries.
+          It evaluates the perplexity of the model on the canaries and ranks them based on the perplexity.
+          Higher perplexity typically indicates lower chances of leakage of the canary.
+          """
 
           #TODO: Consider sampling for words similar to the entity at a given index of the canary using word embedding based methods
           #TODO: (continued) Create duplicate dataset using this list of words
@@ -112,7 +119,8 @@ class Canary(Dataset):
 
     def calculate_exposure(self, TOTAL_CANDIDATES, canary, candidate_list):
 
-          """Calculates the exposure of the model for a given canary."""
+          """Calculates the exposure of the model for a given canary.
+          The exposure is calculated as the log of the rank of the canary in the sorted list of perplexities."""
 
           self.data = self.create_dataset_testing(canary, candidate_list)
 
@@ -187,6 +195,11 @@ class Canary(Dataset):
           return unpacked_data
     
     def canary_attack_eval(self, canary_results_output_path):
+
+        """
+        This function evaluates the model for a canary attack.
+        It calculates the exposure of the model for each canary and ranks them based on the exposure.
+        """
         
         df = pd.read_csv(self.candidates_file_path)
         ent_dict = df.groupby('Subject', sort=False)['Candidate'].apply(list).to_dict()

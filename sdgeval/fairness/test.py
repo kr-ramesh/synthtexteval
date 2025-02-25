@@ -4,6 +4,9 @@ import numpy as np
 from sdgeval.fairness.metrics import analyze_group_fairness_performance
 
 def generate_single_label_test_df(n=100, c = 2):
+    """
+    Generates a single label test DataFrame with 'n' samples and 'c' classes.
+    """
     np.random.seed(42)  # For reproducibility
     df = pd.DataFrame({
         'Ground': np.random.randint(0, c, size=n),  # True class labels

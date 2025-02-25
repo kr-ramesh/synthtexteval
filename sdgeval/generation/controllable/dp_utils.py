@@ -1,5 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+"""
+This module contains utilities for training models with differential privacy using Opacus.
+Credits to the original source code for this module belongs to : https://github.com/microsoft/dp-transformers/
+"""
 
 import opacus
 import torch

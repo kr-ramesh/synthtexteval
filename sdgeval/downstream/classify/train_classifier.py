@@ -22,6 +22,9 @@ os.environ["WANDB_DISABLED"] = "true"
 
 @dataclass
 class TrainingArguments(HfTrainingArguments):
+    """
+    TrainingArguments is a class containing all the arguments needed to initiate the Trainer instance.
+    """
     output_dir: str = field(default="top3")
     evaluation_strategy: str = field(default="epoch")
     num_train_epochs: int = field(default=3)
@@ -35,6 +38,9 @@ class TrainingArguments(HfTrainingArguments):
 
 @dataclass
 class ModelArguments:
+    """
+    ModelArguments is a class containing all the arguments needed to initiate a Classifier instance.
+    """
     model_name: str = field(default="bert-base-uncased", metadata={
         "help": "Path to the model to be used for training or testing. Can be a HuggingFace model or path to an existing fine-tuned model."
     })
@@ -69,6 +75,9 @@ class ModelArguments:
 
 @dataclass
 class Arguments:
+    """
+    Arguments is a class containing all the arguments needed to initiate a Classifier instance.
+    """
     train: TrainingArguments
     model: ModelArguments
 
@@ -78,6 +87,10 @@ def save_predictions(Y_pred, Y_true, path_to_save):
     df.to_csv(path_to_save)
 
 class Classifier():
+    """
+    Defines the class that is used to train and test a downstream classifier on a given dataset. 
+    The user can also opt to use synthetic data to augment the training data, or use synthetic data to test the model. 
+    """
     def __init__(self, args):
 
         self.model_args = args.model
@@ -116,6 +129,9 @@ class Classifier():
         return examples
 
     def compute_metrics_multiclass(self, eval_pred):
+        """
+        Computes the metrics for a multiclass classification task.
+        """
         logits, ytrue = eval_pred
         ypred = np.argmax(logits, axis=-1)
         precision = precision_score(ytrue, ypred, average='macro')
@@ -130,7 +146,9 @@ class Classifier():
         'accuracy': accuracy}
 
     def compute_metrics_multilabel(self, eval_pred, threshold = 0.5):
-
+        """
+        Computes the metrics for a multilabel classification task.
+        """
         logits, labels = eval_pred
         sigmoid = torch.nn.Sigmoid()
         probs = sigmoid(torch.Tensor(logits))
@@ -143,13 +161,18 @@ class Classifier():
         return evaluate_multilabel_classifier(logit_labels, labels)
 
     def compute_metrics(self, eval_pred):
+        """
+        Computes the metrics for a given classification task.
+        """
         if(self.model_args.problem_type == "multi_label_classification"):
             return self.compute_metrics_multilabel(eval_pred)
         else:
             return self.compute_metrics_multiclass(eval_pred)
 
     def finetune_model(self):
-
+        """
+        Trains/fine-tunes the model on the given dataset.
+        """
         print("Preprocessing dataset!")
         
         train_dataset, eval_dataset = self.dataset['train'], self.dataset['validation']
@@ -173,13 +196,15 @@ class Classifier():
         trainer.save_model(self.model_args.path_to_model)
     
     def test_model(self):
-
+        """
+        Tests the model on the given dataset.
+        """
         print("Preprocessing dataset")
 
         processed_test_dataset = self.process_map(self.dataset)
         self.model = self.model.to(self.device)
 
-        print("Model evaluation begins!")
+        print("Model evaluation begins...")
 
         trainer = Trainer(model=self.model,
                         args=self.training_args,
@@ -189,12 +214,16 @@ class Classifier():
         evaluation_results = trainer.evaluate()
         print("Evaluation results:", evaluation_results)
         evaluation_results['model_name'] = self.model_args.path_to_model
+        
+        # Retain the columns in the output CSV file
         if(self.model_args.retain_columns):
             results_df = pd.read_csv(self.model_args.path_to_output_csv)
             for col_name in self.model_args.retain_columns:
                 results_df[col_name] = self.dataset[col_name]
             results_df.to_csv(self.model_args.path_to_output_csv, index = False)
         df = pd.DataFrame([evaluation_results])
+        
+        # Save the results to a csv file
         if(os.path.exists(self.model_args.path_to_aggregated_results)):
             df.to_csv(self.model_args.path_to_aggregated_results, index=False, header = None, mode = 'a')
         else:

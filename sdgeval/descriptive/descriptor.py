@@ -13,8 +13,8 @@ nltk.download('punkt')
 
 class TextDescriptor:
     """
-    Defines the pipeline for processing and analyzing text data.
-    
+    Defines the text descriptor class for analyzing textual data. The class provides methods for analyzing named entities,
+    n-grams, TF-IDF scores, and topic modeling. The results can be saved as a pickle file and optionally plotted.
     Attributes:
         texts (list): A list of textual documents.
         args (TextDescriptorArgs): Configuration arguments for text processing and analysis.
@@ -131,5 +131,8 @@ class TextDescriptor:
             self._plot_entity_frequency(plt_file_path = self.args.plt_file_path)
     
     def save_to_pickle(self, data, pkl_file_path):
+        """
+        Save the analysis results to a pickle file.
+        """
         with open(pkl_file_path, 'wb') as file:
             pickle.dump(data, file)

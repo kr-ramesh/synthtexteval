@@ -1,8 +1,3 @@
-
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-'''Train LLMs with DP using QLoRA'''
-
 import datasets
 import transformers
 import sys
