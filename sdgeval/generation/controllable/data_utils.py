@@ -138,7 +138,6 @@ class CustomDataset:
         output_dataframe = {}
         for col in retain_columns:
             output_dataframe[col] = [element for element in test_dataset[col] for i in range(num_return_seq)]
-        print(output_dataframe)
         
         print("Length of test data", len(test_dataset))
 

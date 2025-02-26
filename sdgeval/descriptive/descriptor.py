@@ -10,6 +10,7 @@ from gensim import corpora, models
 from itertools import chain
 
 nltk.download('punkt')
+nltk.download('punkt_tab')
 
 class TextDescriptor:
     """

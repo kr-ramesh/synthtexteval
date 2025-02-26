@@ -1,3 +1,4 @@
+import os
 import datasets
 import transformers
 import sys
@@ -14,6 +15,9 @@ from peft import get_peft_model, LoraConfig, TaskType, get_peft_model_state_dict
 from transformers import Trainer
 
 from pynvml import *
+
+# Optional
+os.environ['WANDB_DISABLED'] = "true"
 
 def print_gpu_utilization():
     nvmlInit()

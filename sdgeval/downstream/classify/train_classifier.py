@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import os
 
+# Switch this off in case you want to initialize WandB
 os.environ["WANDB_DISABLED"] = "true"
 
 #TODO: Comment the code

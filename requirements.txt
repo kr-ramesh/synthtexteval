@@ -13,3 +13,7 @@ spacy
 torch
 tqdm
 transformers
+opacus
+rouge_score
+pynvml
+prv-accountant

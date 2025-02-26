@@ -21,6 +21,9 @@ from torch.utils.data import DataLoader
 
 from pynvml import *
 
+# Optional
+os.environ['WANDB_DISABLED'] = "true"
+
 #TODO: Change the argument variable names.
 
 def inference(args: argument_utils.Arguments):

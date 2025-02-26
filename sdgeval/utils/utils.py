@@ -1,6 +1,7 @@
 from sklearn.metrics import precision_score, recall_score, f1_score, hamming_loss, accuracy_score
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import numpy as np
 import torch
 import json
 import os
@@ -52,6 +53,9 @@ def encode_labels(df, label_column, output_json_path, multilabel=False, separato
         df["Label"] = df[label_column].astype(str).apply(lambda x: [label_mapping[label] for label in x.split(separator)])
     else:
         df["Label"] = df[label_column].map(label_mapping)
+
+    if any(isinstance(k, np.int64) for k in label_mapping.keys()):
+      label_mapping = {int(k): v for k, v in label_mapping.items()}
 
     # Save label mapping as JSON
     #os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
