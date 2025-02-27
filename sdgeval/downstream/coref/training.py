@@ -5,7 +5,7 @@ import random
 import numpy as np
 # from torch.utils.tensorboard import SummaryWriter
 import torch
-from coref_bucket_batch_sampler import BucketBatchSampler
+from sdgeval.downstream.coref.coref_bucket_batch_sampler import BucketBatchSampler
 from tqdm import tqdm, trange
 
 from transformers import AdamW, get_linear_schedule_with_warmup

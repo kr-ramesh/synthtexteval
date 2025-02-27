@@ -2,10 +2,9 @@ import json
 import os
 from datetime import datetime
 from time import time
-#import git
 import torch
 
-from consts import NULL_ID_FOR_COREF
+from sdgeval.downstream.coref.consts import NULL_ID_FOR_COREF
 
 
 def flatten_list_of_lists(lst):

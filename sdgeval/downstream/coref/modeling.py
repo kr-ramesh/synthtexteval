@@ -3,7 +3,7 @@ from torch.nn import Module, Linear, LayerNorm, Dropout
 from transformers import BertPreTrainedModel, LongformerModel, LongformerConfig
 # from transformers.modeling_bert import ACT2FN
 from transformers.activations import ACT2FN
-from utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, mask_tensor
+from sdgeval.downstream.coref.utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, mask_tensor
 
 
 class FullyConnectedLayer(Module):

@@ -7,8 +7,8 @@ import sys
 import json
 import collections
 import spacy
-import conll
-from utils import flatten_list_of_lists
+import sdgeval.downstream.coref.conll as conll
+from sdgeval.downstream.coref.utils import flatten_list_of_lists
 import spacy
 import os
 from tqdm import tqdm

@@ -8,12 +8,13 @@ import torch
 
 from transformers import AutoConfig, AutoTokenizer, CONFIG_MAPPING, LongformerConfig, RobertaConfig
 
-from modeling import S2E
-from data import get_dataset
-from cli import parse_args
-from training import train, set_seed
-from eval import Evaluator
-from infer import InferenceEngine
+from sdgeval.downstream.coref.modeling import S2E
+from sdgeval.downstream.coref.data import get_dataset
+from sdgeval.downstream.coref.cli import parse_args
+from sdgeval.downstream.coref.training import train, set_seed
+from sdgeval.downstream.coref.eval import Evaluator
+from sdgeval.downstream.coref.infer import InferenceEngine
+#from sdgeval.downstream.coref.arguments import CorefArgs
 # from utils import write_meta_data
 
 logger = logging.getLogger(__name__)
@@ -21,13 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 
-def main():
-    args = parse_args()
-
-    transformers_logger = logging.getLogger("transformers")
-    transformers_logger.setLevel(logging.ERROR)
-
-    
+def coref_train(args):
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
@@ -151,4 +146,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    transformers_logger = logging.getLogger("transformers")
+    transformers_logger.setLevel(logging.ERROR)
+    coref_train(args)

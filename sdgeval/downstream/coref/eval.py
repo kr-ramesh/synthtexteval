@@ -5,11 +5,11 @@ import random
 from collections import OrderedDict, defaultdict
 import numpy as np
 import torch
-from coref_bucket_batch_sampler import BucketBatchSampler
-from data import get_dataset
-from metrics import CorefEvaluator, MentionEvaluator
-from utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, extract_clusters_for_decode
-from conll import evaluate_conll
+from sdgeval.downstream.coref.coref_bucket_batch_sampler import BucketBatchSampler
+from sdgeval.downstream.coref.data import get_dataset
+from sdgeval.downstream.coref.metrics import CorefEvaluator, MentionEvaluator
+from sdgeval.downstream.coref.utils import extract_clusters, extract_mentions_to_predicted_clusters_from_clusters, extract_clusters_for_decode
+from sdgeval.downstream.coref.conll import evaluate_conll
 
 logger = logging.getLogger(__name__)
 
