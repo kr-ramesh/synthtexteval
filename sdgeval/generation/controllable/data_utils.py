@@ -298,7 +298,8 @@ class WikiBio(CustomDataset):
         except:
             print("Directory exists: ", path_to_train_dataset)
             if(os.path.isfile(path_to_test_dataset) and os.path.isfile(path_to_train_dataset) and os.path.isfile(path_to_eval_dataset)):
-                return Dataset.from_pandas(path_to_train_dataset),  Dataset.from_pandas(path_to_eval_dataset),  Dataset.from_pandas(path_to_test_dataset)
+                return Dataset.from_pandas(pd.read_csv(path_to_train_dataset)),  Dataset.from_pandas(pd.read_csv(path_to_eval_dataset)),  Dataset.from_pandas(pd.read_csv(path_to_test_dataset))
+                #return Dataset.from_pandas(path_to_train_dataset),  Dataset.from_pandas(path_to_eval_dataset),  Dataset.from_pandas(path_to_test_dataset)
                 
         df_train, df_eval, df_test = split_and_save_dataframe(pd.read_csv(self.path_to_dataset), output_dir)
         
