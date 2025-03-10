@@ -14,10 +14,12 @@
       - [Setting up the environment](#setting-up-the-environment)
     - [Training the Model to Generate Synthetic Data](#training-the-model-to-generate-synthetic-data)
         - [Using Differential Privacy to Generate Synthetic Data](#using-differential-privacy-to-generate-synthetic-data) 
-        - [Generating Synthetic Data](#generating-synthetic-data)
+    - [Generating Synthetic Data](#generating-synthetic-data)
     - [Evaluation Pipeline](#evaluation-pipeline)
         - [Generating Descriptive Statistics](#generating-descriptive-statistics)
         - [Evaluating Downstream Utility](#evaluating-downstream-utility)
+            - [Classification](#classification)
+            - [Coreference Resolution and Mention Annotation](#coreference-resolution-and-mention-annotation)
         - [Fairness Evaluation](#fairness-evaluation)
         - [Privacy Evaluation](#privacy-evaluation)
         - [Qualitative Evaluation](#qualitative-evaluation)
@@ -86,7 +88,7 @@ pip install -e .
 
 ## Training the Model to Generate Synthetic Data
 
-We provide functionality to train models to generate synthetic data using control codes, allowing for the creation of synthetic text with controllable attributes specified by the user. 
+We provide functionality to train models to generate synthetic data using control codes, allowing for the generation of synthetic text with controllable attributes specified by the user. 
 
 ```
 import sdgeval.generation.controllable.argument_utils as argument_utils
@@ -185,7 +187,7 @@ desc_analyze._ngram_frequency()
 
 ### Classification
 
-### Creating a Dataset
+#### Creating a dataset
 
 To prepare synthetic data for classification tasks, use create_classification_dataset to convert a CSV file into a structured dataset.
 
@@ -202,7 +204,7 @@ _, _, _ = create_classification_dataset(
     train_ratio=0.7, test_ratio=0.15, val_ratio=0.15
 )
 ```
-### Training a Classifier
+#### Training a classifier
 
 After creating the dataset, train a classifier using the sdgeval.downstream.classify module. We also provide a training script for this in the ```downstream/classify``` subdirectory.
 
@@ -231,7 +233,7 @@ if __name__ == "__main__":
         obj.finetune_model()
 ```
 
-### Testing the Classifier
+#### Testing the classifier
 
 After creating the dataset, we test our trained classifier using the sdgeval.downstream.classify module. We also provide a script for this in the ```downstream/classify``` subdirectory.
 
@@ -261,6 +263,37 @@ if __name__ == "__main__":
         print("Testing:\n")
         obj = Classifier(args=args)
         obj.test_model()
+```
+
+### Coreference Resolution and Mention Annotation
+
+```
+temp_output_dir = './temp' # Define a temp output directory
+model_dir = temp_output_dir + '/base_pretrained_model' # Path to where the base_pretrained_model is downloaded/saved
+os.makedirs(temp_output_dir, exist_ok = True)
+```
+
+#### Generating silver annotations
+In case our synthetic data does not have coreference annotations, we can generate silver annotations for this synthetic data using a pretrained model.
+
+```
+from sdgeval.downstream.coref.minimize_synth import minimize_file
+
+synthetic_data_path = # Path to the synthetic data (a csv file)
+output_path = "./temp" # Path to where outputs are saved
+sample_size = 100 # Sampling a 100 samples from the synthetic data
+minimize_file(synthetic_data_path, output_path, sample_size)
+```
+
+#### Fine-tuning and testing the model
+Fine-tuning a model on these silver annotations and testing it on gold data (the paths can be specified in the arguments). A script to run this and specify the paths/arguments is provided in the ```downstream/coref``` subdirectory.
+
+```
+from sdgeval.downstream.coref.run_coref_comparison import coref_train
+from sdgeval.downstream.coref.arguments import set_default_coref_args
+
+args = set_default_coref_args()
+coref_train(args)
 ```
 
 ## Fairness Evaluation

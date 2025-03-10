@@ -20,8 +20,9 @@ class TextDescriptor:
         texts (list): A list of textual documents.
         args (TextDescriptorArgs): Configuration arguments for text processing and analysis.
     """
-    def __init__(self, texts, args: TextDescriptorArgs):
+    def __init__(self, texts, args: TextDescriptorArgs, reference_texts = []):
         self.texts = texts
+        self.reference_texts = reference_texts
         self.tokenized_texts = [nltk.word_tokenize(doc.lower()) for doc in self.texts]
         self.nlp = spacy.load("en_core_web_sm")
         self.entity_counter = self._get_entity_count()
