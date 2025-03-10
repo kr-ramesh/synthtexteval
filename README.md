@@ -44,6 +44,46 @@ pip install -e .
 
 3. Downloading data to test the toolkit (PhysioNet)
 
+### Training the Model to Generate Synthetic Data
+
+We provide functionality to train models to generate synthetic data using control codes, allowing for the creation of synthetic text with controllable attributes specified by the user. 
+
+```
+import sdgeval.generation.controllable.argument_utils as argument_utils
+from sdgeval.generation.controllable.train_generator import train
+from sdgeval.generation.controllable.testing_args import set_default_training_args, set_default_config_args
+
+if __name__ == "__main__":
+    train_args = set_default_training_args(dry_run=True)
+    
+    # Setting some default arguments for testing the training script
+    model_args, data_args = set_default_config_args()
+    privacy_args, lora_args= argument_utils.PrivacyArguments(), argument_utils.LoraArguments()
+    # Disabling differentially private training 
+    privacy_args.disable_dp = True
+    data_args.dataset_name = # Set the name of the dataset here
+    data_args.path_to_dataset = # Path to the CSV containing the dataset
+    model_args.path_to_save_model = # Path to where the dataset and the model trained on this data will be saved
+    data_args.control_field = # Name of the column in the dataframe corresponding to the control code
+    data_args.text_field = # Name of the column in the dataframe corresponding to the text associated with the control code
+    
+    train(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))
+```
+
+Alternatively, we provide a script to train the model in the ```generation/controllable``` directory, which accepts the following arguments (some of which are optional) (further details regarding the arguments are specified in the ```generation/controllable``` directory):
+
+```
+sh train.sh --model_name --path_to_save_the_model --disable_dp --epsilon_value --path_to_the_dataset --epochs --gradient_accumulation_steps --load_ckpt --path_to_load_model
+```
+
+#### Using Differential Privacy to Generate Synthetic Data
+
+Our training script provides the functionality to train models with differential privacy and LoRA, a parameter-efficient fine-tuning method. This can be toggled in the ```run-train.sh``` or directly in the ```train.sh``` script with the ```disable_dp``` and ```enable_lora``` arguments. The hyperparameters for the privacy budget and LoRA can also be specified in the ```train.sh``` script.
+
+### Generating Synthetic Data
+
+
+
 ### Evaluation Pipeline:
 
 Sample usage:
@@ -57,12 +97,6 @@ data = {
 }
 df = pd.DataFrame(data)
 ```
-
-### Training the Model to Generate Synthetic Data
-
-#### Using Differential Privacy to Generate Synthetic Data
-
-### Generating Synthetic Data
 
 ### Generating Descriptive Statistics
 
