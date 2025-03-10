@@ -11,7 +11,7 @@ import os
 #TODO: Need to remove some redundant parts of the code here. Add comments wherever necessary
 #TODO: Add a dummy function and custom functionality for reading the dataset in case the user has their own format and preprocessing.
 
-def read_data(data_dir, is_test=True, is_synthetic = ''):
+def read_data(data_dir, is_test=True, is_synthetic = False):
     """
     Function to load and return the dataset for training.
 
@@ -19,6 +19,7 @@ def read_data(data_dir, is_test=True, is_synthetic = ''):
         - data_dir (str): Path to the data directory.
         - dataset_name (str): Name of the dataset to be loaded. If an HF dataset with this name exists, it will be loaded.
         - is_test (bool): Whether to load test data only. If False, it loads train and validation sets.
+        - is_synthetic (bool): Whether to load synthetic data. If True, it loads the synthetic data from the data directory.
 
     Returns:
         - dataset (DatasetDict or dict): A DatasetDict if an HF dataset is found, otherwise a dict of datasets loaded from CSV files.
@@ -30,11 +31,14 @@ def read_data(data_dir, is_test=True, is_synthetic = ''):
         print(dataset)
         print(f"Successfully loaded dataset '{data_dir}' from Hugging Face Hub.")
     
-    except ValueError:
+    except:
         # Fall back to loading from local files
         if is_test:
             print("Loading test data")
-            dataset = load_dataset('csv', data_files={"test": os.path.join(data_dir, "test.csv")})
+            if(data_dir.endswith(".csv")):
+                dataset = load_dataset('csv', data_files={"test": data_dir})
+            else:
+                dataset = load_dataset('csv', data_files={"test": os.path.join(data_dir, "test.csv")})
         else:
             print("Loading training and validation data.")
             data_dict = {"train": os.path.join(data_dir, "train.csv"), "validation": os.path.join(data_dir, "validation.csv")}
@@ -100,4 +104,3 @@ def tokenize_data(tokenizer, data, class_labels, problem_type):
         class_labels = torch.tensor(class_labels)
 
       return input_ids, class_labels, attention_masks
-      

@@ -7,6 +7,7 @@ export epochs=$6
 export gradient_accumulation_steps=$7
 export load_ckpt=$8
 export path_to_load_model=$9
+export enable_lora=$10
 
 model_name=${model_name:-"princeton-nlp/Sheared-LLaMA-1.3B"}
 path_to_save_model=${path_to_save_model:-"/data/projects/sdgeval/models/princeton_wiki_DP_"}
@@ -16,6 +17,7 @@ path_to_dataset=${path_to_dataset:-"/data/datasets/wikipedia-biographies-v1->-20
 epochs=${epochs:-5}
 gradient_accumulation_steps=${gradient_accumulation_steps:-1}
 load_ckpt=${load_ckpt:-false}
+enable_lora=${enable_lora:-true}
 
 if [ "$disable_dp" = true ]; then
   epsilon_value="inf"
@@ -53,7 +55,7 @@ python -m torch.distributed.run --nproc_per_node 4 lora_dp_trainer.py \
         --lora_dim 8 \
         --lora_alpha 8 \
         --lora_dropout 0.0 \
-        --enable_lora \
+        --enable_lora $enable_lora \
         --target_modules "['q_proj', 'v_proj']" \
         --label_names labels \
         --gradient_checkpointing

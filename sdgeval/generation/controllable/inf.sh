@@ -4,6 +4,7 @@ export path_to_load_model=$3
 export path_to_test_dataset=$4
 export disable_dp=$5
 export epsilon_value=$6
+export enable_lora=$7
 
 path_to_save_test_output=${path_to_save_test_output:-"princeton_wiki_DP_8_outputs.csv"}
 model_name=${model_name:-"princeton-nlp/Sheared-LLaMA-1.3B"}
@@ -11,6 +12,7 @@ path_to_load_model=${path_to_load_model:-"/data/dp-fact/text-gen/models/princeto
 path_to_test_dataset=${path_to_test_dataset:-"/data/projects/sdgeval/models/princeton_wiki_data/eval.csv"}
 epsilon_value=${epsilon_value:-8}
 disable_dp=${enable_dp:-true}
+enable_lora=${enable_lora:-true}
 
 if [ "$disable_dp" = false ]; then
   epsilon_value="inf"
@@ -58,7 +60,7 @@ python inference.py \
         --lora_dim 8 \
         --lora_alpha 8 \
         --lora_dropout 0.0 \
-        --enable_lora \
+        --enable_lora $enable_lora \
         --target_modules "['q_proj', 'v_proj']" \
         --label_names labels \
         --gradient_checkpointing

@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 from sdgeval.descriptive.arguments import TextDescriptorArgs
+from sdgeval.descriptive.compare import basic_comparison_metrics, compare_distributions
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gensim import corpora, models
 from itertools import chain
@@ -114,6 +115,20 @@ class TextDescriptor:
         topics = lda_model.print_topics(num_words=num_words)
         return topics
             
+    def _compare_to_reference_distribution(self, metrics):
+        """
+        Compare the text distributions based on the provided metrics.
+        
+        Arguments:
+            (list) metrics: List of metrics to compare
+        """
+        if 'text-length' in metrics:
+            print("Comparing text length...")
+            basic_comparison_metrics(self.texts, self.reference_texts)
+        
+        print("Comparing distributions...")
+        compare_distributions(self.texts, self.reference_texts, metrics)
+
     def analyze_entities(self):
         """
         Analyzes named entities by identifying the most and least frequent ones, saves the results as a 
