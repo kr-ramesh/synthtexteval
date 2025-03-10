@@ -1,5 +1,6 @@
 ### Arguments
-We provide the following arguments for our TextDescriptor class:
+
+We provide the following arguments for training and generating synthetic data with the controllable generation approach:
 
 | Argument | Argument Type   | Description   |
 | :---:   | :---: | :--- |
