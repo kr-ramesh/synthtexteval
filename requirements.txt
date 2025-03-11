@@ -17,3 +17,4 @@ opacus
 rouge_score
 pynvml
 prv-accountant
+tabulate

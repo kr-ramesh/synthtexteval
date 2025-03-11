@@ -28,7 +28,6 @@ def read_data(data_dir, is_test=True, is_synthetic = False):
     try:
         # Attempt to load the dataset from HF Hub or directory of the correct format
         dataset = load_dataset(data_dir)
-        print(dataset)
         print(f"Successfully loaded dataset '{data_dir}' from Hugging Face Hub.")
     
     except:

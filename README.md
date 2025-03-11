@@ -38,7 +38,7 @@ SynthEval is an open-source library built to enable comprehensive evaluation of 
 - **Fairness Evaluation** ⚖️: Analyzes model performance across different subgroups to ensure fairness and detect any distributional biases in models trained on the generated text.
 -  **Automated Open-Ended Text Evaluation** 🎯: Measures the quality of text using metrics such as Frechet Distance (FID), MAUVE Score, and perplexity to measure the quality and distributional differences between synthetic and real text corpora.
 - **Visualization and Descriptive Text Analysis** 📊: Provides tools for visualizing and analyzing key text features like named entities, n-grams, TF-IDF, and topic modeling, providing deeper insights into text structure, diversity, and themes.
-- **Privacy and Memorization** 🔐: etects memorization in synthetic texts and language models through privacy evaluations, including canary attacks and entity-based metrics, to ensure sensitive information is not inadvertently reproduced and compliance with data regulations is followed.
+- **Privacy and Memorization** 🔐: Detects memorization in synthetic outputs and language models through privacy evaluations that include canary attacks and entity-based metrics. This is to ensure sensitive information is not inadvertently reproduced and compliance with data regulations is followed.
 
 
 ## Repository Structure

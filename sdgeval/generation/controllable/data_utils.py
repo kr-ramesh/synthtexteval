@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import random
 import os, re
-from datasets import Dataset, DatasetDict, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 from sdgeval.utils.utils import split_and_save_dataframe
 #TODO: Format the control code part of this
 
@@ -264,6 +264,23 @@ class HFDataset(CustomDataset):
         super().__init__(tokenizer, args.model.sequence_len)
 
 
+class TAB(CustomDataset):
+    """
+    Dataset class for HuggingFace datasets.
+    """
+    def __init__(self, args, tokenizer):
+
+        self.dataset = load_from_disk(args.data.path_to_dataset)
+        self.control_field = "control"
+        self.text_field = self.control_field
+        self.prompt_begin = ""
+        self.prompt_end = "\n"
+        self.label_field = "text"
+        self.evaluate = evaluate.load("rouge")
+                
+        super().__init__(tokenizer, args.model.sequence_len)
+
+
 class WikiBio(CustomDataset):
     """
     Dataset class for WikiBio dataset.
@@ -309,4 +326,4 @@ class WikiBio(CustomDataset):
 
         return  Dataset.from_pandas(df_train),  Dataset.from_pandas(df_eval),  Dataset.from_pandas(df_test)
 
-ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio}
+ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio, "tab": TAB}
