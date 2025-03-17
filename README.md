@@ -88,18 +88,6 @@ pip install -e .
 
 ## Evaluation Pipeline:
 
-Sample usage:
-
-
-```python
-data = {
-    'texts': [
-        ...
-    ]
-}
-df = pd.DataFrame(data)
-```
-
 ## Generating Descriptive Statistics
 
 The TextDescriptor class provides comprehensive text analysis capabilities, including named entity recognition, n-gram frequency analysis, TF-IDF computation, and topic modeling using LDA. Designed for evaluating synthetic and real text, it offers functionality to extract insights, visualize entity distributions, and save results for further analysis. Some of the functions can be called as follows:
@@ -108,7 +96,12 @@ The TextDescriptor class provides comprehensive text analysis capabilities, incl
 from syntheval.descriptive.descriptor import TextDescriptor
 from syntheval.descriptive.arguments import TextDescriptorArgs
 
-desc_analyze = TextDescriptor(texts = data['texts'], args = TextDescriptorArgs(produce_plot=True))
+desc_analyze = TextDescriptor(texts = texts, # A list of texts to analyze
+                              args = TextDescriptorArgs(produce_plot=True), # Passes the arguments and the hyperparameters for the descriptor module
+                              reference_texts = # (Optional) A list of reference texts, typically sourced from the real distribution.
+                              )
+
+# Example functionality:
 desc_analyze.analyze_entities()
 desc_analyze._topic_modeling()
 desc_analyze._compute_tfidf()
