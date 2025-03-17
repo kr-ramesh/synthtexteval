@@ -25,7 +25,7 @@ fi
 path_to_save_model=$path_to_save_model$epsilon_value
 #TODO: Change the dataset name variable
 #Enable dry_run True to test that it works
-python -m torch.distributed.run --nproc_per_node 4 lora_dp_trainer.py \
+python -m torch.distributed.run --nproc_per_node 4 train_generator.py \
         --output_dir outputs \
         --model_name $model_name \
         --path_to_dataset $path_to_dataset \

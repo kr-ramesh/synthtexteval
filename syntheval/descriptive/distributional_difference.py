@@ -22,11 +22,11 @@ def kl_divergence(texts_1, texts_2):
 
     tfidf_matrix_1, tfidf_matrix_2 = convert_to_tfidf(texts_1, texts_2)
     kl_divs = []
-    for doc_1, doc_2 in zip(tfidf_matrix_1, tfidf_matrix_2):
-        # KL divergence works only for positive distributions
-        kl_divs.append(np.sum(kl_div(doc_1, doc_2)))
+    for doc_1 in tfidf_matrix_1:
+        for doc_2 in tfidf_matrix_2:
+            kl_divs.append(np.sum(kl_div(doc_1, doc_2)))
 
-    return kl_divs
+    return np.mean(kl_divs)
 
 def jaccard_similarity(texts_1, texts_2):
     """
@@ -37,12 +37,13 @@ def jaccard_similarity(texts_1, texts_2):
         return len(set1.intersection(set2)) / len(set1.union(set2))
 
     similarities = []
-    for t1, t2 in zip(texts_1, texts_2):
+    for t1 in texts_1:
         set1 = set(t1.split())
-        set2 = set(t2.split())
-        similarities.append(jaccard(set1, set2))
+        for t2 in texts_2:
+            set2 = set(t2.split())
+            similarities.append(jaccard(set1, set2))
 
-    return similarities
+    return np.mean(similarities)
 
 def cosine_similarity_between_texts(texts_1, texts_2):
     """
@@ -52,4 +53,4 @@ def cosine_similarity_between_texts(texts_1, texts_2):
     tfidf_matrix_1, tfidf_matrix_2 = convert_to_tfidf(texts_1, texts_2)
     cosine_sim = cosine_similarity(tfidf_matrix_1, tfidf_matrix_2)
 
-    return cosine_sim
+    return np.mean(np.mean(cosine_sim, axis = 1))

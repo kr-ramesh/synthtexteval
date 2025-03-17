@@ -46,13 +46,12 @@ def compare_distributions(texts_1, texts_2, metrics):
 
     if('kl_divergence' in metrics):
         kl = kl_divergence(texts_1, texts_2)
-        print("Kullback-Leibler Divergence:", kl)
+        print(f"Kullback-Leibler Divergence: {kl:.3f}")
     if('jaccard' in metrics):
         js = jaccard_similarity(texts_1, texts_2)
-        print("Jaccard Similarity:", js)
+        print(f"Jaccard similarity: {js:.3f}")
     if('cosine' in metrics):
         cs = cosine_similarity_between_texts(texts_1, texts_2)
-        print("Cosine Similarity:")
-        print(cs)
-    
+        print(f"Cosine similarity: {cs:.3f}")
+            
     #return md, wd, kl, js, cs

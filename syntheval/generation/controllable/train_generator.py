@@ -67,7 +67,7 @@ def train(args: argument_utils.Arguments):
         dataset.dataset = dataset.dataset.map(
             dataset.preprocess_function, batched=True, num_proc=8, desc="tokenizing dataset",
             remove_columns=dataset.dataset.column_names['train'],
-            load_from_cache_file=True
+            load_from_cache_file=False
         )
     
     if args.lora.enable_lora:

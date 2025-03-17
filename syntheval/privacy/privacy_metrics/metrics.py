@@ -22,12 +22,11 @@ def entity_leakage(paragraphs: list, entities: list, entity_leakage_result_path:
         result, leaked_count = entity_leakage_per_paragraph(paragraph, entities)
         total_leaked_count+=leaked_count
         results[paragraph] = (result, leaked_count)
-    
-    print(results)
-    
+        
     # Save results into a pickle file
-    with open(entity_leakage_result_path, "wb") as f:
-         pickle.dump(results, f)
+    if(entity_leakage_result_path is not None):
+        with open(entity_leakage_result_path, "wb") as f:
+            pickle.dump(results, f)
 
     return (total_leaked_count / (total_entities * len(paragraphs))) * 100, results
 
@@ -84,11 +83,10 @@ def search_phrase(df, patterns, save_file_path = 'outputs.csv', max_window_len =
         df = df
     
     print("Length:", len(df))
-    print("Length of patterns", len(patterns))
+    print("Total number of entities", len(patterns))
 
     phrases, window_lengths, entities = phrase_search(df[text_field].tolist(), patterns, window = max_window_len)
     
     df = pd.DataFrame({'Entity': entities, 'Phrase': phrases, 'Context Length': window_lengths})
     df.to_csv(save_file_path)
-    print(df.head())
     return phrases

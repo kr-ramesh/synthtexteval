@@ -63,3 +63,9 @@ def discard_data(df, discard_limit = 20, frequency_limit = 10, text_field = "CMN
     df= df[df[text_field].apply(check_repeats)]    
         
     return df
+
+def process_df(df, text_column = 'output_text'):
+
+    df[text_column] = df[text_column].apply(lambda x: x[:x.rfind('.')+1])
+    
+    return df
