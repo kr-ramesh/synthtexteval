@@ -12,9 +12,6 @@
     - [Repository Structure](#repository-structure)
     - [Installation Instructions](#installation-instructions)
       - [Setting up the environment](#setting-up-the-environment)
-    - [Training the Model to Generate Synthetic Data](#training-the-model-to-generate-synthetic-data)
-        - [Using Differential Privacy to Generate Synthetic Data](#using-differential-privacy-to-generate-synthetic-data) 
-    - [Generating Synthetic Data](#generating-synthetic-data)
     - [Evaluation Pipeline](#evaluation-pipeline)
         - [Generating Descriptive Statistics](#generating-descriptive-statistics)
         - [Evaluating Downstream Utility](#evaluating-downstream-utility)
@@ -23,6 +20,9 @@
         - [Fairness Evaluation](#fairness-evaluation)
         - [Privacy Evaluation](#privacy-evaluation)
         - [Qualitative Evaluation](#qualitative-evaluation)
+    - [Training the Model to Generate Synthetic Data](#training-the-model-to-generate-synthetic-data)
+        - [Using Differential Privacy to Generate Synthetic Data](#using-differential-privacy-to-generate-synthetic-data) 
+    - [Generating Synthetic Data](#generating-synthetic-data)
     - [Citations](#citations)
 
 
@@ -38,7 +38,7 @@ SynthEval is an open-source library built to enable comprehensive evaluation of 
 - **Fairness Evaluation** ⚖️: Analyzes model performance across different subgroups to ensure fairness and detect any distributional biases in models trained on the generated text.
 -  **Automated Open-Ended Text Evaluation** 🎯: Measures the quality of text using metrics such as Frechet Distance (FID), MAUVE Score, and perplexity to measure the quality and distributional differences between synthetic and real text corpora.
 - **Visualization and Descriptive Text Analysis** 📊: Provides tools for visualizing and analyzing key text features like named entities, n-grams, TF-IDF, and topic modeling, providing deeper insights into text structure, diversity, and themes.
-- **Privacy and Memorization** 🔐: etects memorization in synthetic texts and language models through privacy evaluations, including canary attacks and entity-based metrics, to ensure sensitive information is not inadvertently reproduced and compliance with data regulations is followed.
+- **Privacy and Memorization** 🔐: Detects memorization in synthetic outputs and language models through privacy evaluations that include canary attacks and entity-based metrics. This is to ensure sensitive information is not inadvertently reproduced and compliance with data regulations is followed.
 
 
 ## Repository Structure
@@ -46,7 +46,7 @@ SynthEval is an open-source library built to enable comprehensive evaluation of 
 The following is a condensed structure of our repository and the functionality it enables.
 
 ```
-sdgeval
+syntheval
 |____data # Dataset directory for data stored and used in the pipeline
 |____descriptive
 | |____descriptor.py # Module for descriptive analysis of text
@@ -74,7 +74,7 @@ sdgeval
 
 Clone the repository (the command below is for public repositories only)
 ```
-git clone https://github.com/kr-ramesh/sdg-eval/
+git clone https://github.com/kr-ramesh/syntheval/
 ```
 
 ### Setting up the environment
@@ -86,80 +86,12 @@ pip install -e .
 
 3. Downloading data to test the toolkit (PhysioNet)
 
-## Training the Model to Generate Synthetic Data
-
-We provide functionality to train models to generate synthetic data using control codes, allowing for the generation of synthetic text with controllable attributes specified by the user. 
-
-```
-import sdgeval.generation.controllable.argument_utils as argument_utils
-from sdgeval.generation.controllable.train_generator import train
-from sdgeval.generation.controllable.testing_args import set_default_training_args, set_default_config_args
-
-if __name__ == "__main__":
-    train_args = set_default_training_args(dry_run=True)
-    
-    # Setting some default arguments for testing the training script
-    model_args, data_args = set_default_config_args()
-    privacy_args, lora_args= argument_utils.PrivacyArguments(), argument_utils.LoraArguments()
-    # Disabling differentially private training 
-    privacy_args.disable_dp = True
-    data_args.dataset_name = # Set the name of the dataset here
-    data_args.path_to_dataset = # Path to the CSV containing the dataset
-    model_args.path_to_save_model = # Path to where the dataset and the model trained on this data will be saved
-    data_args.control_field = # Name of the column in the dataframe corresponding to the control code
-    data_args.text_field = # Name of the column in the dataframe corresponding to the text associated with the control code
-    
-    train(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))
-```
-
-Alternatively, we provide a script to train the model in the ```generation/controllable``` subdirectory, which accepts the following arguments (some of which are optional) (further details regarding the arguments are specified in the ```generation/controllable``` subdirectory):
-
-```
-sh train.sh --model_name --path_to_save_the_model --disable_dp --epsilon_value --path_to_the_dataset --epochs --gradient_accumulation_steps --load_ckpt --path_to_load_model
-```
-
-### Using Differential Privacy to Generate Synthetic Data
-
-Our training script provides the functionality to train models with differential privacy and LoRA, a parameter-efficient fine-tuning method. This can be toggled in the ```run-train.sh``` or directly in the ```train.sh``` script with the ```disable_dp``` and ```enable_lora``` arguments. The hyperparameters for the privacy budget and LoRA can also be specified in the ```train.sh``` script.
-
-## Generating Synthetic Data
-
-```
-import sdgeval.generation.controllable.argument_utils as argument_utils
-from sdgeval.generation.controllable.testing_args import set_default_training_args, set_default_config_args
-
-if __name__ == "__main__":
-    train_args = set_default_training_args(dry_run=False, dry_test_run = True)
-    
-    model_args, data_args = set_default_config_args()
-    privacy_args, lora_args= argument_utils.PrivacyArguments(), argument_utils.LoraArguments()
-    privacy_args.disable_dp = True
-    data_args.dataset_name = # Name of the dataset
-    data_args.path_to_test_dataset = # Path to the dataset/control codes that you want to use for generation
-    model_args.path_to_load_model = # Path to the model to be loaded for inference
-    data_args.control_field = # Name of the column in the dataframe corresponding to the control code
-    data_args.text_field = # Name of the column in the dataframe corresponding to the text associated with the control code
-
-    # Set to True when you want to perform inference
-    model_args.inference = True
-    model_args.num_return_seq = # Number of sequences to be generated for each control code
-
-    
-    inference(argument_utils.Arguments(train=train_args, privacy=privacy_args, model=model_args, data = data_args, lora=lora_args))
-```
-
-We also provide a script to run inference in the ```generation/controllable``` subdirectory. 
-
-```
-sh inf.sh --path_to_save_test_output --model_name --path_to_load_model --path_to_the_test_dataset --disable_dp
-```
-
 ## Evaluation Pipeline:
 
 Sample usage:
 
 
-```
+```python
 data = {
     'texts': [
         ...
@@ -172,9 +104,9 @@ df = pd.DataFrame(data)
 
 The TextDescriptor class provides comprehensive text analysis capabilities, including named entity recognition, n-gram frequency analysis, TF-IDF computation, and topic modeling using LDA. Designed for evaluating synthetic and real text, it offers functionality to extract insights, visualize entity distributions, and save results for further analysis. Some of the functions can be called as follows:
 
-```
-from sdgeval.descriptive.descriptor import TextDescriptor
-from sdgeval.descriptive.arguments import TextDescriptorArgs
+```python
+from syntheval.descriptive.descriptor import TextDescriptor
+from syntheval.descriptive.arguments import TextDescriptorArgs
 
 desc_analyze = TextDescriptor(texts = data['texts'], args = TextDescriptorArgs(produce_plot=True))
 desc_analyze.analyze_entities()
@@ -187,12 +119,31 @@ desc_analyze._ngram_frequency()
 
 ### Classification
 
+#### Generating silver annotations
+If our synthetic data lacks label annotations, we can generate silver annotations for it using an existing pretrained model.
+
+```python
+from generate_silver_annotations import generate_silver_annotations
+
+generate_silver_annotations(
+    model_name = "bert-base-uncased",
+    path_to_model = # path to model to use for silver annotations,
+    n_labels = # number of labels,
+    problem_type = # multiclass or multilabel classification,
+    data_path = # path to data to annotate,
+    text_column = # input text column,
+    label_column = # label column,
+    output_path = # path to the annotated CSV,
+    ckpt_exists = True # set to True when loading from local files
+)
+```
+
 #### Creating a dataset
 
 To prepare synthetic data for classification tasks, use create_classification_dataset to convert a CSV file into a structured dataset.
 
-```
-from sdgeval.utils.utils import create_classification_dataset
+```python
+from syntheval.utils.utils import create_classification_dataset
 
 # Create a classification dataset
 _, _, _ = create_classification_dataset(
@@ -206,78 +157,50 @@ _, _, _ = create_classification_dataset(
 ```
 #### Training a classifier
 
-After creating the dataset, train a classifier using the sdgeval.downstream.classify module. We also provide a training script for this in the ```downstream/classify``` subdirectory.
+After creating the dataset, train a classifier using the syntheval.downstream.classify module. We also provide a training script for this in the ```downstream/classify``` subdirectory. This script can also be used to test the classifier using the same module. Additional detailed documentation on the module, including its functionalities for testing with synthetic data and augmenting the training set with synthetic data, can be found in this subdirectory.
 
-```
-from transformers import TrainingArguments as HfTrainingArguments
-from sdgeval.downstream.classify.train_classifier import TrainingArguments, ModelArguments, Classifier, Arguments
+```python
+# Command to execute the training script with the required parameters:
+#
+# Parameters:
+#   --model_name: Name of the pre-trained model to use (e.g., bert-base-uncased)
+#   --path_to_dataset: Path to the dataset directory (e.g., sst2)
+#   --path_to_model: Directory where the trained model will be saved (e.g., models/bert-base-uncased-sst2)
+#   --num_labels: The number of output labels for classification (e.g., 2 for binary classification)
+#   --is_train: Whether to train the model (True or False)
+#   --is_test: Whether to test the model (True or False)
+#
+# Usage:
+#   sh train.sh <model_name> <path_to_dataset> <path_to_model> <num_labels> <is_train> <is_test>
 
-if __name__ == "__main__":
-    # Define training and model arguments
-    train_args = TrainingArguments()
-    model_args = ModelArguments()
-    
-    model_args.is_train = True  # Enable training
-    model_args.text_field = # Name of the text column 
-    model_args.label_field = # Name of the label column
-    model_args.path_to_dataset = # Path to where the training set is
-    model_args.n_labels = 5  # Number of labels for the classification task
-    model_args.problem_type = 'single_label_classification'  # Set problem type
-
-    args = Arguments(train=train_args, model=model_args)
-
-    print("Initialization...")
-    if args.model.is_train:
-        print("Training:\n")
-        obj = Classifier(args=args)
-        obj.finetune_model()
+# Example: 
+sh train.sh bert-base-uncased "sst2" models/bert-base-uncased-sst2 2 True True
 ```
 
-#### Testing the classifier
-
-After creating the dataset, we test our trained classifier using the sdgeval.downstream.classify module. We also provide a script for this in the ```downstream/classify``` subdirectory.
-
-```
-from transformers import TrainingArguments as HfTrainingArguments
-from sdgeval.downstream.classify.train_classifier import TrainingArguments, ModelArguments, Classifier, Arguments
-
-if __name__ == "__main__":
-    # Define testing arguments
-    train_args = TrainingArguments()
-    model_args = ModelArguments()
-    
-    model_args.is_train = False  # Disable training
-    model_args.is_test = True  # Enable testing
-    model_args.path_to_model = # Path to trained model    
-    model_args.text_field = # Name of the text column 
-    model_args.label_field = # Name of the label column
-    model_args.path_to_dataset = # Path to where the test set is
-    model_args.n_labels = 5  # Number of labels for the classification task
-    model_args.problem_type = 'single_label_classification'  # Set problem type
-    model_args.retain_columns = ['Name', 'input_prompt']  # Keep specific columns
-
-    args = Arguments(train=train_args, model=model_args)
-
-    print("Initialization...")
-    if args.model.is_test:
-        print("Testing:\n")
-        obj = Classifier(args=args)
-        obj.test_model()
-```
+##
 
 ### Coreference Resolution and Mention Annotation
 
-```
+```python
 temp_output_dir = './temp' # Define a temp output directory
 model_dir = temp_output_dir + '/base_pretrained_model' # Path to where the base_pretrained_model is downloaded/saved
 os.makedirs(temp_output_dir, exist_ok = True)
 ```
 
-#### Generating silver annotations
-In case our synthetic data does not have coreference annotations, we can generate silver annotations for this synthetic data using a pretrained model.
+#### Download a pre-trained model (Instructions sourced from [here](https://github.com/yuvalkirstain/s2e-coref)):
 
+```python
+export MODEL_DIR=<model_dir>
+curl -L https://www.dropbox.com/sh/7hpw662xylbmi5o/AAC3nfP4xdGAkf0UkFGzAbrja?dl=1 > temp_model.zip
+unzip temp_model.zip -d $MODEL_DIR
+rm -rf temp_model.zip
 ```
-from sdgeval.downstream.coref.minimize_synth import minimize_file
+
+#### Generating silver annotations
+In case our synthetic data does not have coreference annotations, we can generate silver annotations for this synthetic data using an existing pretrained model.
+
+```python
+from syntheval.downstream.coref.minimize_synth import minimize_file
 
 synthetic_data_path = # Path to the synthetic data (a csv file)
 output_path = "./temp" # Path to where outputs are saved
@@ -286,14 +209,45 @@ minimize_file(synthetic_data_path, output_path, sample_size)
 ```
 
 #### Fine-tuning and testing the model
-Fine-tuning a model on these silver annotations and testing it on gold data (the paths can be specified in the arguments). A script to run this and specify the paths/arguments is provided in the ```downstream/coref``` subdirectory.
-
-```
-from sdgeval.downstream.coref.run_coref_comparison import coref_train
-from sdgeval.downstream.coref.arguments import set_default_coref_args
+Fine-tuning a model on these silver annotations and testing it on gold data (the paths can be specified in the arguments).
+```python
+from syntheval.downstream.coref.run_coref_comparison import coref_train
+from syntheval.downstream.coref.arguments import set_default_coref_args
 
 args = set_default_coref_args()
 coref_train(args)
+```
+
+Alternative, we can run this with the following script provided in the ```downstream/coref``` subdirectory.
+
+```python
+python run_coref_comparison.py \
+	--output_dir=$temp_output_dir \
+        --model_type=longformer \
+        --base_model_name_or_path=$model_dir \
+        --tokenizer_name=allenai/longformer-large-4096 \
+        --test_file=$test_file \
+        --do_infer \
+        --num_train_epochs=$num_train_epochs \
+        --logging_steps=100 \
+        --save_steps=1000 \
+        --eval_steps=150 \
+        --max_seq_length=4000 \
+        --predict_file=$predict_file \
+        --predict_file_write=$predict_file_write \
+        --normalise_loss \
+        --max_total_seq_len=4000 \
+        --experiment_name=eval_model \
+        --warmup_steps=5600 \
+        --adam_epsilon=1e-6 \
+        --head_learning_rate=3e-4 \
+        --learning_rate=1e-5 \
+        --adam_beta2=0.98 \
+        --weight_decay=0.01 \
+        --dropout_prob=0.3 \
+        --save_if_best \
+        --top_lambda=0.4  \
+        --tensorboard_dir=$temp_output_dir/tb
 ```
 
 ## Fairness Evaluation
@@ -301,8 +255,8 @@ coref_train(args)
 Assessing fairness is crucial when evaluating synthetic text models. The analyze_group_fairness_performance() function helps analyze performance disparities across subgroups. The user can define any categorical column in their dataframe as the subgroup_type.
 
 
-```
-from sdgeval.fairness.metrics import analyze_group_fairness_performance
+```python
+from syntheval.fairness.metrics import analyze_group_fairness_performance
 
 df = # Load dataframe containing model predictions from classification task
 
@@ -322,23 +276,26 @@ p_df, f_df = analyze_group_fairness_performance(
 
 Assuming the user already has access to a list of private entities from their original data, we can conduct a privacy evaluation as follows:
 
-```
-from sdgeval.privacy.privacy_metrics.metrics import entity_leakage
+```python
+from syntheval.privacy.privacy_metrics.metrics import entity_leakage
 
 # Returns the overall percentage of leaked entities and a dictionary containing the entities leaked in each text
-total_leakage, privacy_analysis = entity_leakage(paragraphs = # list of synthetic texts, entities = # list of private entities provided by the user, entity_leakage_result_path = # path to save the results)
+total_leakage, privacy_analysis = entity_leakage(paragraphs = # list of synthetic texts, 
+                                                entities = # list of private entities provided by the user, 
+                                                entity_leakage_result_path = # path to save the results
+                                                )
 ```
 
 The search_phrase() function helps identify occurrences of private entities in synthetically generated text and extracts surrounding context for analysis. It helps detect memorization in synthetically generated text by identifying instances where spans of text, including private entities, are regurgitated from the training data. By extracting these spans of text we can assess if private information is reproduced verbatim or subtly altered.
 
-```
-from sdgeval.privacy.privacy_metrics.metrics import search_phrase
+```python
+from syntheval.privacy.privacy_metrics.metrics import search_phrase
 
 fake_entities = # User-defined list of private entities
-
 df = # Dataframe containing synthetically generated text
 text_field = # Name of the column corresponding to the text field
 max_window_len = # # Maximum number of words around each entity to extract its surrounding context
+
 search_phrase(df = df, patterns = entity_list, max_window_len = max_window_len, text_field = text_field)
 ```
 
@@ -350,10 +307,10 @@ We can evaluate the quality of synthetic text by comparing it against real-world
 
 
 
-```
+```python
 from dataclasses import dataclass
-from sdgeval.qual.metrics import QualEval
-from sdgeval.qual.arguments import MauveArgs, LMArgs, FrechetArgs
+from syntheval.qual.metrics import QualEval
+from syntheval.qual.arguments import MauveArgs, LMArgs, FrechetArgs
 
 # Define qualitative metric evaluation arguments
 @dataclass
@@ -377,3 +334,64 @@ qual_eval.calculate_mauve_score(df)   # MAUVE Score for distribution similarity
 qual_eval.calculate_perplexity(df)    # Perplexity score for fluency
 ```
 
+## Training the Model to Generate Synthetic Data
+
+We provide functionality to train models to generate synthetic data using control codes, allowing for the generation of synthetic text with controllable attributes specified by the user. We provide a script to train the model in the ```generation/controllable``` subdirectory, which accepts the following arguments (some of which are optional) (further details regarding the arguments are specified in the ```generation/controllable``` subdirectory):
+
+```python
+# Command to execute the training of the synthetic data generator.
+
+#   Parameters:
+#   --model_name           : The name of the pre-trained model (e.g., "princeton-nlp/Sheared-LLaMA-1.3B")
+#   --path_to_save_model   : The directory to save the trained model (e.g., "/data/projects/syntheval/models/")
+#   --disable_dp           : Disable Differential Privacy (true/false)
+#   --epsilon_value        : The epsilon value for DP (used when DP is enabled)
+#   --path_to_dataset      : Path to the dataset for training (e.g., "/data/datasets/wikipedia-biographies-v1-200.csv")
+#   --epochs               : Number of epochs to train
+#   --gradient_accumulation_steps : Number of gradient accumulation steps
+#   --load_ckpt            : Whether to load a checkpoint for continuing training (true/false)
+#   --path_to_load_model   : Path to the checkpoint model (if loading, else set to "")
+#   --enable_lora          : Whether to enable LoRA (true/false)
+
+
+# Usage:
+#   sh train.sh <model_name> <path_to_save_the_model> <disable_dp> <epsilon_value> <path_to_the_dataset> <epochs> <gradient_accumulation_steps> <load_ckpt> <path_to_load_model> <enable_lora>
+
+# Example:
+sh train.sh "gpt2" "models/gpt2_DP_" true "inf" "dataset.csv" 5 1 false "" true
+```
+
+
+### Using Differential Privacy to Generate Synthetic Data
+
+Our training script provides the functionality to train models with differential privacy and LoRA, a parameter-efficient fine-tuning method. This can be toggled in the ```run-train.sh``` or directly in the ```train.sh``` script with the ```disable_dp``` and ```enable_lora``` arguments. The hyperparameters for the privacy budget and LoRA can also be specified in the ```train.sh``` script.
+
+```python
+sh train.sh "gpt2" "models/gpt_DP_" false 8 "dataset.csv" 5 64 false "" true
+```
+
+## Generating Synthetic Data
+
+
+We also provide a script to run inference in the ```generation/controllable``` subdirectory. 
+
+```python
+# Command to generate synthetic data from the trained generator model.
+
+#   Parameters:
+#   --path_to_save_test_output  : Directory to save the test output (e.g., "/data/projects/syntheval/test_outputs/")
+#   --model_name                : The name of the pre-trained model (e.g., "princeton-nlp/Sheared-LLaMA-1.3B")
+#   --path_to_load_model        : Path to the model checkpoint for loading (e.g., "/data/projects/syntheval/models/princeton_wiki_DP_8/")
+#   --path_to_test_dataset      : Path to the dataset used for testing (e.g., "/data/datasets/wikipedia-biographies-v1-200.csv")
+#   --disable_dp                : Whether to disable Differential Privacy (true/false)
+#   --epsilon_value             : The epsilon value for DP (used when DP is enabled)
+#   --enable_lora               : Whether to enable LoRA (true/false)
+
+# Usage:
+#   sh inf.sh <path_to_save_test_output> <model_name> <path_to_load_model> <path_to_test_dataset> <disable_dp> <epsilon_value> <enable_lora>
+
+# Example:
+sh inf.sh "inference.csv" "gpt2" "models/gpt2_DP_" "dataset/test.csv" true "inf" true
+```
+
+## Citations
