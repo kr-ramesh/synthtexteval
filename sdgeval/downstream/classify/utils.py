@@ -4,6 +4,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trai
 from torch.utils.data import DataLoader, TensorDataset
 import torch, ast, os
 import numpy as np, pandas as pd
+import seaborn as sns, matplotlib.pyplot as plt
 from datasets import load_dataset
 import os
 
@@ -17,21 +18,15 @@ def read_data(data_dir, is_test=True, is_synthetic = False):
 
     Args:
         - data_dir (str): Path to the data directory.
-        - dataset_name (str): Name of the dataset to be loaded. If an HF dataset with this name exists, it will be loaded.
         - is_test (bool): Whether to load test data only. If False, it loads train and validation sets.
         - is_synthetic (bool): Whether to load synthetic data. If True, it loads the synthetic data from the data directory.
 
     Returns:
         - dataset (DatasetDict or dict): A DatasetDict if an HF dataset is found, otherwise a dict of datasets loaded from CSV files.
     """
-    
-    try:
-        # Attempt to load the dataset from HF Hub or directory of the correct format
-        dataset = load_dataset(data_dir)
-        print(f"Successfully loaded dataset '{data_dir}' from Hugging Face Hub.")
-    
-    except:
-        # Fall back to loading from local files
+
+    if os.path.exists(data_dir):
+        # Loading from local files
         if is_test:
             print("Loading test data")
             if(data_dir.endswith(".csv")):
@@ -45,6 +40,10 @@ def read_data(data_dir, is_test=True, is_synthetic = False):
                 print("Loading synthetic data from data directory")
                 data_dict["synthetic"] = os.path.join(data_dir, "synthetic.csv")
             dataset = load_dataset('csv', data_files=data_dict)
+    else:
+        # Attempt to load the dataset from HF Hub or directory of the correct format
+        dataset = load_dataset(data_dir)
+        print(f"Successfully loaded dataset '{data_dir}' from Hugging Face Hub.")
     
     return dataset
 
@@ -103,3 +102,52 @@ def tokenize_data(tokenizer, data, class_labels, problem_type):
         class_labels = torch.tensor(class_labels)
 
       return input_ids, class_labels, attention_masks
+
+
+def experiment_compare_real_synthetic(args, retrain=False, plot_path='temp/results.png', metrics=['Precision', 'Recall', 'f1_micro']):
+    """
+    Function to compare performance on downstream task across real-only, synthetic-only, and synthetic augmentation training data settings.
+    Generates plot to compare across scoring metrics.
+
+    Args:
+        - args (Arguments): training and model arguments.
+        - retrain (bool): whether to retrain models with existing checkpoints (will retrain if true)
+        - plot_path (str): where resulting plot is saved
+        - metrics (list[str]): list of metrics to compare model performance (metrics must match headings in output csv headers)
+    """
+    
+    model_args = args.model
+    path_to_model = model_args.path_to_model
+    model_args.is_train = True
+    model_args.is_test = False
+    for synth_arg in ['real-only', 'synthetic-train-only', 'synthetic-train-augment']:
+        print(f"Training {synth_arg}:\n")
+        model_args.synthetic_usage = synth_arg
+        model_args.path_to_model = f'{path_to_model}/{synth_arg}'
+        if not os.path.exists(model_args.path_to_model) or retrain:
+            obj = Classifier(args = args)
+            obj.finetune_model()
+    
+    model_args.is_train = False
+    model_args.is_test = True
+    if not os.path.exists(model_args.path_to_aggregated_results):
+        for synth_arg in ['real-only', 'synthetic-train-only', 'synthetic-train-augment']:
+            print(f"Testing {synth_arg}:\n")
+            model_args.path_to_model = f'{path_to_model}/{synth_arg}'
+            obj = Classifier(args = args)
+            obj.test_model()
+        
+    if plot_path:
+        eval_df = pd.read_csv(model_args.path_to_aggregated_results)
+        plot_df = []
+        for i, row in eval_df.iterrows():
+            print(row['model_name'])
+            name = row['model_name'][len(path_to_model)+1:]
+            print(name)
+            for metric in metrics:
+                plot_df.append([name, metric, row[f'eval_{metric}']])
+        plot_df = pd.DataFrame(plot_df, columns=['Training Data', 'Metric', 'Score'])
+        plt.figure(figsize=(5,3))
+        sns.barplot(plot_df, x='Metric', y='Score', hue='Training Data')
+        plt.legend(loc='lower right')
+        plt.savefig(plot_path)

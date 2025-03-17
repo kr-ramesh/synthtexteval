@@ -98,7 +98,8 @@ class Classifier():
         self.training_args = args.train
 
         if(self.model_args.is_train):
-            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, is_test = False, is_synthetic = self.model_args.synthetic_usage)
+            is_synthetic = 'synthetic' in self.model_args.synthetic_usage
+            self.dataset = read_data(data_dir = self.model_args.path_to_dataset, is_test = False, is_synthetic = is_synthetic)
             self.model, self.tokenizer = load_model(model_name = self.model_args.model_name, path_to_model = self.model_args.path_to_model, problem_type = self.model_args.problem_type, n_labels = self.model_args.n_labels)
         
         elif(self.model_args.is_test):
