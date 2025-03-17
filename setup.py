@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="sdgeval",  # Replace with your package name
+    name="syntheval",  # Replace with your package name
     version="0.1.0",
     description="A brief description of your package",
     author="Your Name",
