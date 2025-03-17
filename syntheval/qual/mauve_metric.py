@@ -22,4 +22,4 @@ def calculate_mauve_score(df,  args: MauveArgs):
     
     out = mauve.compute_mauve(p_text=source_texts, q_text=reference_texts, device_id=args.device_id, featurize_model_name = args.model_name_featurizer, max_text_length=args.max_text_length, verbose=False)
 
-    print(out)
+    return (out, out.mauve)

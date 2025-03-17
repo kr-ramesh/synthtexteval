@@ -20,5 +20,5 @@ def calculate_perplexity(df, args: LMArgs):
     perplexity = load("perplexity", module_type="metric")
     results = perplexity.compute(predictions=texts, model_id=args.model_name)
 
-    return results
+    return (results, results['perplexity']['mean_perplexity'])
 
