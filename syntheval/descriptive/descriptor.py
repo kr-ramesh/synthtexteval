@@ -115,7 +115,7 @@ class TextDescriptor:
         topics = lda_model.print_topics(num_words=num_words)
         return topics
             
-    def _compare_to_reference_distribution(self, metrics):
+    def _compare_to_reference_distribution(self, metrics, plot=False):
         """
         Compare the text distributions based on the provided metrics.
         
@@ -124,7 +124,7 @@ class TextDescriptor:
         """
         if 'text-length' in metrics:
             print("Comparing text length...")
-            basic_comparison_metrics(self.texts, self.reference_texts)
+            basic_comparison_metrics(self.texts, self.reference_texts, plot)
         
         print("Comparing distributions...")
         compare_distributions(self.texts, self.reference_texts, metrics)
@@ -135,6 +135,9 @@ class TextDescriptor:
         pickle file, and optionally generates a plot of entity frequencies.
         """
         least_frequent = self._get_least_frequent_entities(n = self.args.min_threshold)
+        if len(least_frequent) > self.args.min_threshold:
+            least_frequent_keys = list(least_frequent.keys())
+            least_frequent = {least_frequent_keys[i]: least_frequent[least_frequent_keys[i]] for i in range(self.args.min_threshold)}
         most_frequent = self._get_top_n_entities(top_n = self.args.max_threshold)
         
         print("Most frequent entities:", most_frequent)
