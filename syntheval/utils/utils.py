@@ -125,6 +125,23 @@ def evaluate_multilabel_classifier(y_true, y_pred):
         'Subset Accuracy': subset_accuracy,
     }
 
+def evaluate_multiclass_classifier(y_true, y_pred):
+    """
+    Evaluate a multiclass classifier using various metrics.
+    """
+
+    precision = precision_score(y_true, y_pred, average='macro')
+    recall = recall_score(y_true, y_pred, average='macro')
+    f1 = f1_score(y_true, y_pred, average='macro')
+    accuracy = accuracy_score(y_true, y_pred)
+        
+    return {
+        'Precision': precision,
+        'Recall': recall,
+        'F1': f1,
+        'Accuracy': accuracy,
+    }
+
 def compare_models(model_1, model_2):
     """
     Compare two PyTorch models to see if they are the same. This was defined for debugging purposes.

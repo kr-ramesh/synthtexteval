@@ -5,6 +5,7 @@ from typing import List, Tuple
 import torch
 import pickle
 import pandas as pd
+import numpy as np
 
 def frechet_inception_distance_score(real_embeddings: List[torch.Tensor], 
                   synth_embeddings: List[torch.Tensor]) -> Tuple[List[float], List[float]]:
@@ -39,7 +40,5 @@ def calculate_fid_score(df, args: FrechetArgs):
     real_text_embedding = sent_model.encode(real_texts)
     
     fid_score_result = frechet_inception_distance_score(synth_text_embedding, real_text_embedding)
-    
-    print("FID Score: ", fid_score_result)
 
-    return fid_score_result
+    return (fid_score_result, np.mean(fid_score_result['synth_scores']))
