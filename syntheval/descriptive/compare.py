@@ -67,5 +67,3 @@ def compare_distributions(texts_1, texts_2, metrics):
     if('cosine' in metrics):
         cs = cosine_similarity_between_texts(texts_1, texts_2)
         print(f"Cosine similarity: {cs:.3f}")
-            
-    #return md, wd, kl, js, cs

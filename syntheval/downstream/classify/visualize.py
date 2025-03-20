@@ -54,4 +54,3 @@ def tabulate_results(csv_paths, n_labels, print_fairness=False, subgroup_type=No
         print("\nFairness Results:")
         print(tabulate(p_df, headers="keys", tablefmt="pretty"))
 
-#tabulate_results(['/home/kramesh3/sdg-eval/data/princeton_tab_synthetic_noDP_outputs.csv'], n_labels = 7, print_fairness = True, subgroup_type = "country")

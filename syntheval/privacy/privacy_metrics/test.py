@@ -1,5 +1,5 @@
-from syntheval.privacy.privacy_metrics.metrics import entity_leakage
-from syntheval.privacy.privacy_metrics.metrics import search_phrase
+from syntheval.privacy.privacy_metrics.metrics import entity_leakage, search_phrase_text, compute_phrase_text_overlap
+from syntheval.privacy.privacy_metrics.metrics import search_and_compute_EPO
 import pandas as pd
 
 fake_text = """Investigative journalist Rachel Marin thought she had seen it all, but when a whistleblower from Velkor Industries 
@@ -24,6 +24,12 @@ fake_entities = [
 
 #print(entity_leakage(fake_text, fake_entities))
 
-t_df = pd.DataFrame({'text': [fake_text]})
+t_df, synth_df = pd.DataFrame({'text': [fake_text]}), pd.DataFrame({'text': [fake_text[:100]]})
 text_field = 'text'
-search_phrase(df = t_df, patterns = fake_entities, max_window_len = 3, text_field = 'text')
+#search_phrase_text(df = t_df, patterns = fake_entities, max_window_len = 3, text_field = 'text')
+#compute_phrase_text_overlap('outputs.csv', 'outputs.csv', remove_duplicates = False)
+
+search_and_compute_EPO(synth_file = synth_df, ref_file = t_df, 
+                       synth_phrase_file_path = 'synth-outputs.csv', ref_phrase_file_path = 'ref-outputs.csv',
+                       entity_patterns = fake_entities, max_window_len = 3,
+                       text_field = text_field)

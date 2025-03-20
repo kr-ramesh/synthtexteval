@@ -1,6 +1,7 @@
 import re
 import pickle
 import pandas as pd
+from tabulate import tabulate
 from typing import Union
 
 def entity_leakage(paragraphs: list, entities: list, entity_leakage_result_path: str) -> Union[float, dict]:
@@ -52,7 +53,12 @@ def entity_leakage_per_paragraph(paragraph: str, entities: list) -> dict:
             leaked_count+=1
     return results, (leaked_count / total_entities) * 100
 
-def phrase_search(documents, patterns, window = 3):
+def context_pattern_match(documents, patterns, window = 3):
+
+    """
+    Search for phrases in the provided documents that match the entities/patterns, 
+    allowing for a specified context window around the matched entities.
+    """
     
     entity_phrase_spans, window_lengths, entities = [], [], []
     for doc in documents:
@@ -75,8 +81,21 @@ def phrase_search(documents, patterns, window = 3):
             
     return entity_phrase_spans, window_lengths, entities
 
-def search_phrase(df, patterns, save_file_path = 'outputs.csv', max_window_len = 4, text_field = "output_text"):
+def search_phrase_text(df, patterns, save_file_path = 'outputs.csv', max_window_len = 4, text_field = "output_text"):
     
+    """
+    This function reads a CSV file or DataFrame, searches for the specified entity patterns in the text,
+    and saves the matched phrases along with their context lengths to a new CSV file.
+
+    Args:
+        df (str or pd.DataFrame): Path to the CSV file or a DataFrame containing the documents.
+        patterns (list): List of entities/patterns to search for in the documents.
+        save_file_path (str): Path to save the output CSV file with matched phrases and their context lengths.
+        max_window_len (int): Maximum number of words to include in the context window around the matched entities.
+        text_field (str): The column name in the DataFrame that contains the text to search.    
+    
+    """
+
     try:
         df = pd.read_csv(df)
     except:
@@ -85,8 +104,80 @@ def search_phrase(df, patterns, save_file_path = 'outputs.csv', max_window_len =
     print("Length:", len(df))
     print("Total number of entities", len(patterns))
 
-    phrases, window_lengths, entities = phrase_search(df[text_field].tolist(), patterns, window = max_window_len)
+    phrases, window_lengths, entities = context_pattern_match(df[text_field].tolist(), patterns, window = max_window_len)
     
     df = pd.DataFrame({'Entity': entities, 'Phrase': phrases, 'Context Length': window_lengths})
-    df.to_csv(save_file_path)
-    return phrases
+    df.to_csv(save_file_path, index = False)
+    print(f"Output saved to {save_file_path}")
+
+    return df
+    
+def compute_phrase_text_overlap(synth_file_path, ref_file_path, remove_duplicates=True):
+
+    """
+    This function compares the phrases extracted from a synthetic file with those from a reference file,
+    calculates the overlap in terms of context length, and prints the overlap ratio.
+
+    Args:
+        synth_file_path (str): Path to the synthetic file containing phrases.
+        ref_file_path (str): Path to the reference file containing phrases.
+        remove_duplicates (bool): Flag to indicate whether to remove duplicates from the dataframes before comparison.
+    
+    Returns:
+        pd.DataFrame: A DataFrame containing the overlap count and ratio for each context length.
+    """
+    df = pd.read_csv(synth_file_path)    
+    ref_df = pd.read_csv(ref_file_path)
+    
+    for i in [df, ref_df]:
+        i['Context Length'] = i['Context Length'].astype(int)
+        if(remove_duplicates):
+            # Remove duplicates from each dataframe
+            i.drop_duplicates(subset=['Entity', 'Phrase', 'Context Length'], inplace=True)
+
+    overlap_df = pd.merge(ref_df, df, on=['Entity', 'Phrase', 'Context Length'], how='inner')
+    overlap_count = overlap_df.groupby('Context Length').size().reset_index(name='Overlap Count')
+    total_count = ref_df.groupby('Context Length').size().reset_index(name='Total Count')
+
+    # Merge the overlap count with the total count to calculate the ratio
+    overlap_ratio = pd.merge(overlap_count, total_count, on='Context Length')
+    if(overlap_ratio.empty):
+        print("No overlap found between the synthetic and reference files.")
+    else:
+        overlap_ratio['Overlap Ratio (Synth Freq/Train Freq)'] = overlap_ratio['Overlap Count'] / overlap_ratio['Total Count']
+
+        print("Memorized Span Overlap Ratio:")
+        print(tabulate(overlap_ratio, headers='keys', tablefmt='psql', showindex=False))
+
+        return overlap_ratio
+
+def search_and_compute_EPO(synth_file, ref_file, synth_phrase_file_path, 
+                           ref_phrase_file_path, entity_patterns, max_window_len=4, 
+                           remove_duplicates=True, text_field = 'output_text'):
+
+    """
+    Searches and computes the Entity Phrase Overlap (EPO).
+    The Entity Phrase Overlap is a metric that quantifies the overlap of phrases containing specific entities
+    between a synthetic file and a reference file.
+    We define a context window around the matched entities to capture the surrounding text, which helps in understanding
+    the context in which the entities are mentioned and memorized.
+
+    Args:
+        synth_file (str): Path or Pandas DataFrame to the synthetic file containing text 
+        ref_file (str): Path or Pandas DataFrame to the reference file containing text.
+        synth_phrase_file_path (str): Path to save the synthetic file with matched phrases and context lengths.
+    
+    Returns:
+        pd.DataFrame: A DataFrame containing the overlap count and ratio for each context length.
+    
+    """
+
+    # Search for phrases in the synthetic file
+    df = search_phrase_text(synth_file, entity_patterns, save_file_path=synth_phrase_file_path, max_window_len=max_window_len, text_field=text_field)
+    # Search for phrases in the reference file
+    ref_df = search_phrase_text(ref_file, entity_patterns, save_file_path=ref_phrase_file_path, max_window_len=max_window_len, text_field=text_field)
+
+    # Compute the overlap between the synthetic and reference files
+    overlap_df = compute_phrase_text_overlap(synth_phrase_file_path, ref_phrase_file_path, remove_duplicates=remove_duplicates)
+
+    return overlap_df
