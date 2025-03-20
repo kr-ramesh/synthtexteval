@@ -2,6 +2,7 @@ datasets
 evaluate
 GitPython
 matplotlib
+seaborn
 mauve_text
 numpy
 pandas
@@ -18,3 +19,4 @@ rouge_score
 pynvml
 prv-accountant
 tabulate
+pyldavis

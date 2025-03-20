@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from tabulate import tabulate
+import matplotlib.pyplot as plt
 from syntheval.descriptive.distributional_difference import kl_divergence, jaccard_similarity, cosine_similarity_between_texts
 
 def text_length_comparison(texts_1, texts_2):

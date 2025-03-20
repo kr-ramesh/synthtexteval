@@ -9,6 +9,8 @@ from syntheval.descriptive.compare import basic_comparison_metrics, compare_dist
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gensim import corpora, models
 from itertools import chain
+import pyLDAvis
+import pyLDAvis.gensim_models as gensimvis
 
 nltk.download('punkt')
 nltk.download('punkt_tab')
@@ -99,7 +101,7 @@ class TextDescriptor:
         tfidf_matrix = vectorizer.fit_transform(self.texts)
         return vectorizer.get_feature_names_out(), tfidf_matrix.toarray()
     
-    def _topic_modeling(self, num_topics=3, num_words=5):
+    def _topic_modeling(self, num_topics=3, num_words=5, display=True):
         """Perform LDA topic modeling.
         
         Arguments:
@@ -114,6 +116,19 @@ class TextDescriptor:
         lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
         topics = lda_model.print_topics(num_words=num_words)
         return topics
+    
+    def _topic_modeling_display(self, num_topics=3):
+        """Perform LDA topic modeling, and displays result wiht pyLDAvis
+        
+        Arguments:
+            (int) num_topics: Number of topics
+        Returns: 
+            (list): LDA display
+        """
+        dictionary = corpora.Dictionary(self.tokenized_texts)
+        corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts]
+        lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
+        return gensimvis.prepare(lda_model, corpus, dictionary)
             
     def _compare_to_reference_distribution(self, metrics, plot=False):
         """
