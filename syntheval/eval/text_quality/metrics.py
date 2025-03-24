@@ -6,7 +6,7 @@ import pandas as pd
 
 metrics = ['mauve', 'fid', 'perplexity']
 
-class text_qualityEval():
+class TextQualityEval():
 
     def __init__(self, args):
         self.args = args

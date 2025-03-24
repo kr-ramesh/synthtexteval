@@ -40,7 +40,7 @@ class TextDescriptor:
             doc = self.nlp(text)
             for ent in doc.ents:
                 entity_counter[ent.text] += 1
-        return entity_counter
+        self.entity_counter = entity_counter
 
     def _get_least_frequent_entities(self, n):
         """

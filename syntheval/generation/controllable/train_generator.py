@@ -76,6 +76,7 @@ def train(args: argument_utils.Arguments):
             peft_config = LoraConfig(task_type = TaskType.CAUSAL_LM, inference_mode=False, r=args.lora.lora_dim, lora_alpha=args.lora.lora_alpha, lora_dropout=args.lora.lora_dropout)
             model = get_peft_model(model, peft_config)
         else:
+            print("Loading from a pretrained checkpoint...")
             model.load_adapter(args.model.path_to_load_model)
     else:
         logger.info("Not using LoRA")

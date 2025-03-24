@@ -28,7 +28,7 @@ text_field = 'text'
 #search_phrase_text(df = t_df, patterns = fake_entities, max_window_len = 3, text_field = 'text')
 #compute_phrase_text_overlap('outputs.csv', 'outputs.csv', remove_duplicates = False)
 
-search_and_compute_EPO(synth_file = synth_df, ref_file = t_df, 
-                       synth_phrase_file_path = 'synth-outputs.csv', ref_phrase_file_path = 'ref-outputs.csv',
+search_and_compute_EPO(synth_file = synth_df, reference_texts = t_df['text'].tolist(), 
+                       synth_phrase_file_path = 'synth-outputs.csv',
                        entity_patterns = fake_entities, max_window_len = 3,
                        text_field = text_field)

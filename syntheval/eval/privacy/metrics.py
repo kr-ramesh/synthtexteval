@@ -31,8 +31,7 @@ def entity_leakage(paragraphs: list, entities: list, entity_leakage_result_path:
 
     return (total_leaked_count / (total_entities * len(paragraphs))) * 100, results
 
-def search_and_compute_EPO(synth_file, ref_file, synth_phrase_file_path, 
-                           ref_phrase_file_path, entity_patterns, max_window_len=4, 
+def search_and_compute_EPO(synth_file, reference_texts, synth_phrase_file_path, entity_patterns, max_window_len=4, 
                            remove_duplicates=True, text_field = 'output_text'):
 
     """
@@ -44,7 +43,7 @@ def search_and_compute_EPO(synth_file, ref_file, synth_phrase_file_path,
 
     Args:
         synth_file (str): Path or Pandas DataFrame to the synthetic file containing text 
-        ref_file (str): Path or Pandas DataFrame to the reference file containing text.
+        ref_file (str): Path to Pandas DataFrame or HF Dataset to the reference file containing text.
         synth_phrase_file_path (str): Path to save the synthetic file with matched phrases and context lengths.
     
     Returns:
@@ -54,11 +53,9 @@ def search_and_compute_EPO(synth_file, ref_file, synth_phrase_file_path,
 
     # Search for phrases in the synthetic file
     df = search_phrase_text(synth_file, entity_patterns, save_file_path=synth_phrase_file_path, max_window_len=max_window_len, text_field=text_field)
-    # Search for phrases in the reference file
-    ref_df = search_phrase_text(ref_file, entity_patterns, save_file_path=ref_phrase_file_path, max_window_len=max_window_len, text_field=text_field)
-
+    
     # Compute the overlap between the synthetic and reference files
-    overlap_df = compute_phrase_text_overlap(synth_phrase_file_path, ref_phrase_file_path, remove_duplicates=remove_duplicates)
+    overlap_df = compute_phrase_text_overlap(synth_phrase_file_path, reference_texts, remove_duplicates=remove_duplicates)
 
     return overlap_df
 
@@ -146,7 +143,46 @@ def search_phrase_text(df, patterns, save_file_path = 'outputs.csv', max_window_
 
     return df
     
-def compute_phrase_text_overlap(synth_file_path, ref_file_path, remove_duplicates=True):
+def compute_phrase_text_overlap(synth_file_path, reference_texts, remove_duplicates=True):
+
+    """
+    This function compares the phrases extracted from a synthetic file with those from a reference file,
+    and returns the count of phrases of a given context window that appear divided by the total number of training points.
+
+    Args:
+        synth_file_path (str): Path to the synthetic file containing phrases.
+        reference_texts (lst): List of texts in the training data
+        remove_duplicates (bool): Flag to indicate whether to remove duplicates from the dataframes before comparison.
+    
+    Returns:
+        pd.DataFrame: A DataFrame containing the overlap count and ratio for each context length.
+    """
+    match_found = []
+    df = pd.read_csv(synth_file_path)  
+    df['Context Length'] = df['Context Length'].astype(int)
+    if(remove_duplicates):
+        df.drop_duplicates(subset=['Entity', 'Phrase', 'Context Length'], inplace=True)
+
+    for phrase in df['Phrase'].tolist():
+        if any(phrase in text for text in reference_texts):
+            match_found.append(True)
+        else:
+            match_found.append(False)
+    
+    df['Match Found'] = match_found
+    df = df[df['Match Found'] == True]
+
+    match_count = df.groupby('Context Length').size().reset_index(name='Count')
+    if(match_count.empty):
+        print("No overlap found between the synthetic and reference files.")
+    else:
+        match_count['Memorized Span Ratio'] = match_count['Count']/len(reference_texts)
+        print("Length of reference texts: ", len(reference_texts))
+        print("Memorized Span Overlap Ratio:")
+        print(tabulate(match_count, headers='keys', tablefmt='psql', showindex=False))
+
+# Alternate version
+def compute_phrase_text_overlap_deprecated(synth_file_path, ref_file_path, remove_duplicates=True):
 
     """
     This function compares the phrases extracted from a synthetic file with those from a reference file,

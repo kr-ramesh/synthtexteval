@@ -6,29 +6,31 @@ import torch
 import json
 import os
 
-def create_classification_dataset(df, label_column, output_json_path, output_dir, 
+def create_classification_dataset(df, label_column, output_dir, 
                                   multilabel=False, separator=",", train_ratio=0.8, val_ratio=0.1, 
-                                  test_ratio=0.1, random_state=42):
+                                  test_ratio=0.1, random_state=42, json_mapping_exists = False, json_mapping_path = None):
     """
     Creates a classification dataset from a DataFrame and saves the splits to a directory.
     """
-                    
-    df, _ = encode_labels(df, label_column = label_column, output_json_path = output_json_path, 
-                          multilabel = multilabel, separator = separator)
+        
+    df, _ = encode_labels(df, label_column = label_column, json_mapping_exists = json_mapping_exists, 
+                          json_mapping_path = json_mapping_path,  multilabel = multilabel, 
+                          separator = separator)
 
     train_df, eval_df, test_df = split_and_save_dataframe(df, output_dir, train_ratio = train_ratio, 
-                                      test_ratio = test_ratio, val_ratio=val_ratio)
+                                                          test_ratio = test_ratio, val_ratio=val_ratio)
     
     return train_df, eval_df, test_df
 
-def encode_labels(df, label_column, output_json_path, multilabel=False, separator=","):
+def encode_labels(df, label_column, json_mapping_exists, json_mapping_path, multilabel=False, separator=","):
     """
     Encodes labels in a dataframe, creating a mapping of label to numeric value.
 
     Args:
-        df (pd.DataFrame): Input dataframe with labels.
+        df: Input dataframe or HF dataset with labels.
         label_column (str): Name of the column containing labels.
-        output_json_path (str): Path to save the label mapping JSON.
+        json_mapping_exists (bool) : Whether ot not an existing label map has been created already.
+        json_mapping_path (str): Path to load/save the label mapping JSON.
         multilabel (bool): Whether it's a multilabel classification task.
         separator (str): Separator for multilabel values in a string format (default is ",").
 
@@ -36,6 +38,10 @@ def encode_labels(df, label_column, output_json_path, multilabel=False, separato
         pd.DataFrame: Modified dataframe with numeric labels.
         dict: Mapping of labels to numeric values.
     """
+
+    if not isinstance(df, pd.DataFrame):
+        print("Converting to pd.Dataframe format...")
+        df = df.to_pandas()
 
     if multilabel:
         # Extract unique labels from all rows
@@ -45,8 +51,13 @@ def encode_labels(df, label_column, output_json_path, multilabel=False, separato
     else:
         unique_labels = sorted(df[label_column].unique())  # Unique labels for single-label case
 
-    # Create label mapping
-    label_mapping = {label: idx for idx, label in enumerate(unique_labels)}
+    if(json_mapping_exists):
+        print("Label mapping already exists.")
+        with open(json_mapping_path) as f:
+            label_mapping = json.load(f)
+    else:
+        # Create label mapping
+        label_mapping = {label: idx for idx, label in enumerate(unique_labels)}
 
     # Convert labels to numeric values
     if multilabel:
@@ -57,19 +68,12 @@ def encode_labels(df, label_column, output_json_path, multilabel=False, separato
     if any(isinstance(k, np.int64) for k in label_mapping.keys()):
       label_mapping = {int(k): v for k, v in label_mapping.items()}
 
-    # Save label mapping as JSON
-    #os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
-    with open(output_json_path, "w") as f:
-        json.dump(label_mapping, f, indent=4)
+    if not json_mapping_exists:
+        print(f"Saving label mapping to{json_mapping_path}...")
+        with open(json_mapping_path, "w") as f:
+            json.dump(label_mapping, f, indent=4)    
 
     return df, label_mapping
-
-# Example usage:
-# df = pd.DataFrame({"Category": ["cat", "dog", "fish", "dog", "cat"]})  # Single label
-# df, mapping = encode_labels(df, "Category", "label_mapping.json")
-
-# df_multi = pd.DataFrame({"Categories": ["cat,dog", "dog,fish", "cat,fish", "dog", "cat"]})  # Multi-label
-# df_multi, mapping_multi = encode_labels(df_multi, "Categories", "multi_label_mapping.json", multilabel=True)
 
 def split_and_save_dataframe(df, output_dir, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1, random_state=42):
     """

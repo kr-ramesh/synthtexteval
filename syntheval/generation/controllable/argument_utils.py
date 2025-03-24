@@ -23,7 +23,7 @@ class PrivacyArguments:
     """
     Arguments for differentially private training.
     """
-    per_sample_max_grad_norm: Optional[float] = field(default=1, metadata={"help": "Max per sample clip norm"})
+    per_sample_max_grad_norm: Optional[float] = field(default=1.0, metadata={"help": "Max per sample clip norm"})
     noise_multiplier: Optional[float] = field(default=None, metadata={"help": "Noise multiplier for DP training"})
     target_epsilon: Optional[float] = field(default=8, metadata={
         "help": "Target epsilon at end of training (mutually exclusive with noise multiplier)"
@@ -41,6 +41,7 @@ class PrivacyArguments:
         logger.info(f"The target delta is set to be: {self.target_delta}")
 
         # Set up noise multiplier
+        print(f"Sampling probability: {sampling_probability}")
         if self.noise_multiplier is None:
             self.noise_multiplier = find_noise_multiplier(
                 sampling_probability=sampling_probability,
@@ -89,9 +90,9 @@ class TrainingArguments(HfTrainingArguments):
         super().__post_init__()
         if self.dry_run:
             logger.warning("--dry_run was specified. Reducing number of training steps to 2 and logging intervals to 1...")
-            self.logging_steps = 1
+            self.logging_steps = 4
             self.logging_strategy = IntervalStrategy.STEPS
-            self.eval_steps = 1
+            self.eval_steps = None
             self.evaluation_strategy = IntervalStrategy.STEPS
             self.max_steps = 2
 
@@ -126,6 +127,12 @@ class ModelArguments:
     })
     inference: bool = field(default=False, metadata={
         "help": "Whether or not to enable the inference part of the pipeline."
+    })
+    max_new_tokens: int = field(default = 1000, metadata={
+        "help": "Maximum tokens to be generated"
+    })
+    min_new_tokens: int = field(default = 200, metadata={
+        "help": "Minimum tokens to be generated"
     })
     
 @dataclass

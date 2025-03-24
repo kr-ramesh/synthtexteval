@@ -112,9 +112,9 @@ class CustomDataset:
         )
         return {k: round(v, 4) for k, v in result.items()}
 
-    def compute_test_metrics(self, trainer, num_return_seq = 5):
+    def compute_test_metrics(self, trainer, args):
         
-        print("Testing for the entire dataset. Number of generations per prompt: ", num_return_seq)
+        print(f"Testing for the entire dataset. Number of generations per prompt: {args.num_return_seq}")
         
         try:
             test_dataset = self.dataset['test']
@@ -137,7 +137,7 @@ class CustomDataset:
         retain_columns = [col for col in test_dataset.column_names if col not in [self.label_field]]
         output_dataframe = {}
         for col in retain_columns:
-            output_dataframe[col] = [element for element in test_dataset[col] for i in range(num_return_seq)]
+            output_dataframe[col] = [element for element in test_dataset[col] for i in range(args.num_return_seq)]
         
         print("Length of test data", len(test_dataset))
 
@@ -204,17 +204,17 @@ class CustomDataset:
 
                 with torch.no_grad():
                     #generations = model.generate(**padded_inputs, **generation_kwargs)
-                    generations = model.generate(**padded_inputs, do_sample=True, max_new_tokens = 300, top_k=50, top_p=0.95, num_return_sequences=num_return_seq)
+                    generations = model.generate(**padded_inputs, do_sample=True, min_new_tokens = args.min_new_tokens, max_new_tokens = args.max_new_tokens, top_k=50, top_p=0.95, num_return_sequences=args.num_return_seq)
                 
                 ind = 0
                 for mask in padded_inputs["attention_mask"]:
-                    for ind_item in range(ind, ind+num_return_seq):
+                    for ind_item in range(ind, ind+args.num_return_seq):
                         output = generations[ind_item][(1 - mask).sum() :]  # remove padding
 
                         if not return_prompt:
                             output = output[(mask).sum() :]  # remove prompt
                         outputs.append(output)
-                    ind+=num_return_seq
+                    ind+=args.num_return_seq
             return outputs
 
         if hasattr(trainer.model, "generate"):
@@ -241,7 +241,7 @@ class CustomDataset:
         responses = [trainer.tokenizer.decode(r.squeeze(), skip_special_tokens=True)
                                     for r in response_tensors]
         input_data = [trainer.tokenizer.decode(r.squeeze(), skip_special_tokens=True)
-                      for r in test_dataset["input_ids"] for rep in range(num_return_seq)] #TODO: Return num_sequences in place of 3 in the range
+                      for r in test_dataset["input_ids"] for rep in range(args.num_return_seq)] #TODO: Return num_sequences in place of 3 in the range
         output_dataframe['input_prompt'], output_dataframe['output_text'] = input_data, responses
         #df = pd.DataFrame({'Input Prompt': input_data, 'Output Text': responses})
         df = pd.DataFrame(output_dataframe)
