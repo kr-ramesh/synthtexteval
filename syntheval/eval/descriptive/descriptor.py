@@ -8,6 +8,7 @@ from syntheval.eval.descriptive.arguments import TextDescriptorArgs
 from syntheval.eval.descriptive.compare import basic_comparison_metrics, compare_distributions
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gensim import corpora, models
+from gensim.parsing.preprocessing import preprocess_documents
 from itertools import chain
 import pyLDAvis
 import pyLDAvis.gensim_models as gensimvis
@@ -49,6 +50,12 @@ class TextDescriptor:
         sorted_entities = sorted(self.entity_counter.items(), key=lambda x: x[1])
         min_count = sorted_entities[n-1][1] if len(sorted_entities) >= n else sorted_entities[-1][1]
         return {key: value for key, value in self.entity_counter.items() if value <= min_count}
+    
+    def _preprocess_for_topic_modeling(self):
+        """
+        Preprocess the text for topic modeling with Gensim.
+        """
+        self.tokenized_texts_lda = preprocess_documents(self.tokenized_texts)
     
     def _get_top_n_entities(self, top_n):
         """
@@ -111,7 +118,8 @@ class TextDescriptor:
         Returns: 
             (list): List of topics with words
         """
-        dictionary = corpora.Dictionary(self.tokenized_texts)
+        self._preprocess_for_topic_modeling()
+        dictionary = corpora.Dictionary(self.tokenized_texts_lda)
         corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts]
         lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
         topics = lda_model.print_topics(num_words=num_words)
