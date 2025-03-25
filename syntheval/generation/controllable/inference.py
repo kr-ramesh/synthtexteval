@@ -54,34 +54,19 @@ def inference(args: argument_utils.Arguments):
         print(f"Fine-tuned number of parameters of the model: {model.num_parameters(only_trainable=True)}")
     
                            
-    if(not args.privacy.disable_dp):
-        print("Differentially Private Training: True")
-        model = load_dp_model(model, args.model.path_to_load_model + '_pvt')
+    #if(not args.privacy.disable_dp):
+        #print("Differentially Private Training: True")
+        #model = load_dp_model(model, args.model.path_to_load_model + '_pvt')
 
-        trainer = Trainer(
-            args=args.train,
-            model=model._module,
-            tokenizer=tokenizer,
-            compute_metrics=dataset.compute_metrics,
-            preprocess_logits_for_metrics=dataset.preprocess_logits_for_metrics,)
-
-        print("DP model has been loaded...")
-        df = dataset.compute_test_metrics(trainer, args.model)
-        
-    else:
-        print("Differentially Private Training: False")
-        trainer = Trainer(
+    trainer = Trainer(
             args=args.train,
             model=model,
             tokenizer=tokenizer,
             compute_metrics=dataset.compute_metrics,
             preprocess_logits_for_metrics=dataset.preprocess_logits_for_metrics,)
-        
-        #trainer.model.from_pretrained(args.model.path_to_load_model)
 
-        print("Non-DP model has been loaded...")
-        df = dataset.compute_test_metrics(trainer, args.model)
-
+    df = dataset.compute_test_metrics(trainer, args.model)
+    
     print("Saving results to file...")
 
     try:

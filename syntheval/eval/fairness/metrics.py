@@ -87,7 +87,7 @@ def calculate_fairness_metrics(df, problem_type):
     f1_macro, f1_micro = [float(i) for i in df['f1_macro'].tolist()], [float(i) for i in df['f1_micro'].tolist()]
     f1_macro_diff = [max(f1_macro)-min(f1_macro)]*len(df)
     f1_micro_diff = [max(f1_micro)-min(f1_micro)]*len(df)
-    if(problem_type == "multi_label"):
+    if(problem_type == "multilabel"):
         true_negs, true_pos = [int(i) for i in df['TN'].tolist()], [int(i) for i in df['TP'].tolist()]
         false_negs, false_pos = [int(i) for i in df['FN'].tolist()], [int(i) for i in df['FP'].tolist()]
 
