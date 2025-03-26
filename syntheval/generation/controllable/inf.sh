@@ -1,30 +1,38 @@
-export path_to_save_test_output=$1
+export dir_to_save_test_output=$1
 export model_name=$2
-export path_to_load_model=$3
-export path_to_test_dataset=$4
-export disable_dp=$5
-export epsilon_value=$6
-export enable_lora=$7
+export dir_to_load_model=$3
+export dataset_name=$4
+export path_to_dataset=$5
+export path_to_test_dataset=$6
+export disable_dp=$7
+export epsilon_value=$8
+export enable_lora=$9
+export num_return_seq=${10}
 
-path_to_save_test_output=${path_to_save_test_output:-"princeton_wiki_DP_8_outputs.csv"}
+dir_to_save_test_output=${dir_to_save_test_output:-"./data/synthetic"}
 model_name=${model_name:-"princeton-nlp/Sheared-LLaMA-1.3B"}
-path_to_load_model=${path_to_load_model:-"/data/dp-fact/text-gen/models/princeton_wiki_DP_"}
-path_to_test_dataset=${path_to_test_dataset:-"/data/projects/syntheval/models/princeton_wiki_data/eval.csv"}
+dir_to_load_model=${dir_to_load_model:-"./data/generator/models/"}
+dataset_name=${dataset_name:-"tab"}
+#Either specify path_to_dataset or path_to_test_dataset
+path_to_dataset=${path_to_dataset:-"./data/generator/tab/"}
+path_to_test_dataset=${path_to_test_dataset:-"./data/generator/tab/"}
 epsilon_value=${epsilon_value:-8}
-disable_dp=${enable_dp:-true}
+disable_dp=${disable_dp:-true}
 enable_lora=${enable_lora:-true}
+num_return_seq=${num_return_seq:-2}
 
-if [ "$disable_dp" = false ]; then
+if [ "$disable_dp" = true ]; then
   epsilon_value="inf"
 fi
 
-path_to_load_model=$path_to_load_model$epsilon_value
-path_to_dataset="/data/dp-fact/text-gen/models/princeton_wiki_updated_data/"
+path_to_load_model="${dir_to_load_model}/${model_name//\//_}_${dataset_name}_DP_${epsilon_value}"
+path_to_save_test_output="${dir_to_save_test_output}/${model_name//\//_}_${dataset_name}_DP_${epsilon_value}_outputs"
+
 echo $path_to_test_dataset
 echo $path_to_model
-
 #Enable dry_test_run True to test that it works
-python inference.py \
+python /home/kramesh3/syntheval/syntheval/generation/controllable/inference.py \
+        --dry_test_run True \
         --output_dir outputs \
         --disable_dp ${disable_dp} \
         --inference True \
@@ -34,7 +42,7 @@ python inference.py \
         --path_to_dataset "${path_to_dataset}" \
         --path_to_test_dataset ${path_to_test_dataset} \
         --path_to_save_test_output "${path_to_save_test_output}" \
-        --dataset_name wiki \
+        --dataset_name ${dataset_name} \
         --target_epsilon ${epsilon_value} \
         --sequence_len 1024 \
         --per_device_train_batch_size 4 \

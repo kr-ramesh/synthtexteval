@@ -50,10 +50,10 @@ class CorefArgs:
     tensorboard_dir: str = field(default = '/tb', metadata={"help": "Directory for TensorBoard logs."})
     conll_path_for_eval: str = field(default=None, metadata={"help": "Path to CoNLL file for evaluation."})
 
-def set_default_coref_args(output_dir = './temp'):
+def set_default_coref_args(base_model_dir = '/base_pretrained_model/', output_dir = './temp', test_file = "test.i2b2.jsonlines"):
     args = CorefArgs(output_dir = output_dir, predict_file = output_dir + '/silver.jsonlines', 
-                    predict_file_write = output_dir + '/silver.pred.jsonlines', test_file = "/home/kramesh3/syntheval/data/coref/test.i2b2.jsonlines",
-                    base_model_name_or_path = output_dir + '/base_pretrained_model/', 
+                    predict_file_write = output_dir + '/silver.pred.jsonlines', test_file = test_file,
+                    base_model_name_or_path = base_model_dir, 
                     tokenizer_name = 'allenai/longformer-large-4096',
                     do_infer = True, num_train_epochs = 3, logging_steps = 100, 
                     save_steps=1000, eval_steps = 150, max_seq_length = 4000, 

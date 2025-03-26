@@ -203,16 +203,13 @@ def handle_document(text, doc_key, nlp, tokenizer):
 
         
 
-def minimize_partition(input_paths, output_path, rs=0, sample_size=-1):
+def minimize_partition(input_paths, output_path, rs=0, sample_size=-1, text_field = 'text'):
     count = 0
     text_docs = []
     for input_path in input_paths:
         df = pd.read_csv(input_path, header=0, encoding_errors='ignore', on_bad_lines='warn')
-
-        if 'CMNT_TXT' in df.columns:
-            text_docs_ = df['CMNT_TXT'].tolist()
-        else:
-            text_docs_ = df['TEXT'].tolist()
+        text_docs_ = df[text_field].tolist()
+        
         text_docs.extend(text_docs_)
     random.seed(rs)
     random.shuffle(text_docs)
@@ -229,7 +226,7 @@ def minimize_partition(input_paths, output_path, rs=0, sample_size=-1):
                 output_file.write("\n")
                 count += 1
 
-def minimize_file(synthetic_data_path, output_dir, sample_size):
+def minimize_file(synthetic_data_path, output_dir, sample_size, text_field = 'text'):
     if not synthetic_data_path.endswith('.csv'):
         print('synthetic_data_path must be .csv file')
         return
@@ -237,7 +234,7 @@ def minimize_file(synthetic_data_path, output_dir, sample_size):
     input_paths = [synthetic_data_path]
     tag = os.path.basename(synthetic_data_path)[:-4]
     output_path = '{}/silver.jsonlines'.format(output_dir)
-    minimize_partition(input_paths, output_path, rs=0, sample_size=sample_size)
+    minimize_partition(input_paths, output_path, rs=0, sample_size=sample_size, text_field = text_field)
 
 
 if __name__ == "__main__":
@@ -245,5 +242,6 @@ if __name__ == "__main__":
     synthetic_data_path = sys.argv[1]
     output_path = sys.argv[2]
     sample_size = int(sys.argv[3])
-    minimize_file(synthetic_data_path, output_path, sample_size)
+    text_field = sys.argv[4]
+    minimize_file(synthetic_data_path, output_path, sample_size, text_field)
     

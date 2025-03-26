@@ -14,11 +14,15 @@ def calculate_perplexity(df, args: LMArgs):
     Returns:
         results (dict) : Results from the LM metrics' score for each source-reference pair.
     """
-
+    
     texts = df[args.source_text_column].tolist()
-
     perplexity = load("perplexity", module_type="metric")
     results = perplexity.compute(predictions=texts, model_id=args.model_name)
+    
+    if(args.ref_text_column):
+        perplexity = load("perplexity", module_type="metric")
+        res = perplexity.compute(predictions=df[args.ref_text_column].tolist(), model_id=args.model_name)
+        return (results, results['mean_perplexity'], res, res['mean_perplexity'])
 
     return (results, results['mean_perplexity'])
 

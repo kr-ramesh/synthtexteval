@@ -5,9 +5,11 @@ import torch
 import numpy as np
 import pandas as pd
 import random
-import os, re
+import os, re, ast, json
 from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 from syntheval.utils.utils import split_and_save_dataframe
+from collections import Counter
+from tqdm import tqdm
 #TODO: Format the control code part of this
 
 # Modified from https://huggingface.co/docs/peft/task_guides/clm-prompt-tuning
@@ -281,6 +283,61 @@ class TAB(CustomDataset):
         super().__init__(tokenizer, args.model.sequence_len)
 
 
+class MIMIC(CustomDataset):
+
+    def __init__(self, args, tokenizer, create_dataset = False):
+
+        self.path_to_dataset = args.data.path_to_dataset
+        self.control_field = "ICD9_CODE"
+        self.text_field = 'LONG_TITLE'
+        self.prompt_begin = "Diagnosis: "
+        self.prompt_end = " Summary :"
+        self.label_field = 'TEXT'
+        self.evaluate = evaluate.load("rouge")
+
+        try:
+            self.dataset = load_from_disk(self.path_to_dataset)
+            print("Successfully loaded dataset!")
+        except:
+            print("Dataset does not exist. Please create it using specify_control_codes() and try again.")
+        
+        super().__init__(tokenizer, args.model.sequence_len)
+
+    
+    def create_dataset(self, path_to_save_dataset, is_top_freq = 3, 
+                              num_codes = 1000, train_eval_split = 0.95):
+        
+        os.makedirs(path_to_save_dataset, exist_ok=True)
+        df, df2 = pd.read_csv(self.path_to_dataset), []
+        
+        df['ICD9_CODE'] = df['ICD9_CODE'].apply(lambda x: ast.literal_eval(x))
+        df['ICD9_CODE'] = [[str(x).strip() for x in lst] for lst in df['ICD9_CODE'].tolist()]
+        item_counts = Counter([item for sublist in df['ICD9_CODE'].tolist() for item in sublist])
+        control_codes = [item for item, _ in item_counts.most_common(is_top_freq)]
+        print("Control codes:", control_codes)
+        
+        #check
+        df2 = df[df[self.control_field].apply(lambda x: any(item in control_codes for item in x))]
+        df2['ICD9_CODE'] = [[label for label in sublist if label in control_codes] for sublist in df2['ICD9_CODE']]
+          
+        #print("Number of control codes:", len(control_codes))
+        
+        df2= df2.sample(frac=1.0, random_state=42)
+        df = df2.sample(frac = 0.90)
+        df_test = df2.drop(df.index)
+
+        df_train = df.sample(frac = train_eval_split)
+        df_eval = df.drop(df_train.index)
+
+        self.dataset = DatasetDict()
+        self.dataset['train'], self.dataset['validation'], self.dataset['test'] = Dataset.from_pandas(df_train), Dataset.from_pandas(df_eval), Dataset.from_pandas(df_test)
+
+        self.dataset.save_to_disk(path_to_save_dataset)
+        
+        print(f"Length of the training, validation, test sets:{len(df_train)}, {len(df_eval)}, {len(df_test)}")
+        
+        return self.dataset
+
 class WikiBio(CustomDataset):
     """
     Dataset class for WikiBio dataset.
@@ -326,4 +383,4 @@ class WikiBio(CustomDataset):
 
         return  Dataset.from_pandas(df_train),  Dataset.from_pandas(df_eval),  Dataset.from_pandas(df_test)
 
-ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio, "tab": TAB}
+ALL_DATASETS = {"hfhub" : HFDataset, "wiki": WikiBio, "tab": TAB, "mimic": MIMIC}

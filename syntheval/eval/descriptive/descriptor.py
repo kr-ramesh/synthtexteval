@@ -55,7 +55,7 @@ class TextDescriptor:
         """
         Preprocess the text for topic modeling with Gensim.
         """
-        self.tokenized_texts_lda = preprocess_documents(self.tokenized_texts)
+        self.tokenized_texts_lda = preprocess_documents([' '.join(i) for i in self.tokenized_texts])
     
     def _get_top_n_entities(self, top_n):
         """
@@ -120,7 +120,7 @@ class TextDescriptor:
         """
         self._preprocess_for_topic_modeling()
         dictionary = corpora.Dictionary(self.tokenized_texts_lda)
-        corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts]
+        corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts_lda]
         lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
         topics = lda_model.print_topics(num_words=num_words)
         return topics
@@ -133,8 +133,9 @@ class TextDescriptor:
         Returns: 
             (list): LDA display
         """
-        dictionary = corpora.Dictionary(self.tokenized_texts)
-        corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts]
+        self._preprocess_for_topic_modeling()
+        dictionary = corpora.Dictionary(self.tokenized_texts_lda)
+        corpus = [dictionary.doc2bow(text) for text in self.tokenized_texts_lda]
         lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
         return gensimvis.prepare(lda_model, corpus, dictionary)
             

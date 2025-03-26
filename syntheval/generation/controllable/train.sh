@@ -66,4 +66,3 @@ python -m torch.distributed.run --nproc_per_node 4 /home/kramesh3/syntheval/synt
         --target_modules "['q_proj', 'v_proj']" \
         --label_names labels \
         --gradient_checkpointing
-

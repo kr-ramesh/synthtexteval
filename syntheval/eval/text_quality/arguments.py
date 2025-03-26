@@ -2,6 +2,12 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 @dataclass
+class Arguments:
+    FrechetArgs:FrechetArgs
+    MauveArgs:MauveArgs
+    LMArgs:LMArgs
+    
+@dataclass
 class BaseArgs:
     source_text_column: str = field(
         default='source', metadata={"help": "Name of the column containing source texts."}

@@ -24,7 +24,8 @@ if __name__ == "__main__":
         model_path = f'{model_args.model_name.replace("/", "_")}_tab_DP_{privacy_args.target_epsilon}'
         train_args.gradient_accumulation_steps = 16
         train_args.num_train_epochs = 50
-        
+    
+    train_args.learning_rate = 3e-3
     model_args.path_to_save_model = f'{sys.argv[1]}/data/generator/models/{model_path}'
             
     data_args.dataset_name = 'tab'
