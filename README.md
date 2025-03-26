@@ -89,6 +89,12 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+### Dataset Download and Instructions
+
+To set up the directories, run the ```scripts/download_data/setup_dir.sh``` script. For downloading the [Text Anonymization Benchmark](https://huggingface.co/datasets/mattmdjaga/text-anonymization-benchmark-train) (TAB) and [MIMIC-III](https://physionet.org/content/mimiciii/1.4/) datasets, please follow the instructions in the /scripts/download_data folder. Note that accessing MIMIC-III requires a PhysioNet account and CITI certifications. You can preprocess and format the datasets by following the instructions in the respective dataset subdirectories under ```scripts/```.
+
+The ```scripts/``` folder also includes demo scripts, which are also available in a more general form within their corresponding subdirectories.
+
 ## Evaluation Pipeline:
 
 ## Generating Descriptive Statistics
