@@ -78,7 +78,13 @@ synthtexteval
 
 ## Installation Instructions:
 
-Clone the repository
+The package can be installed directly through pip:
+
+```
+pip install SynthTextEval
+```
+
+Alternatively, you can clone the repository and run the commands below to set up the package.
 ```
 git clone https://github.com/kr-ramesh/synthtexteval/
 ```
