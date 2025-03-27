@@ -21,7 +21,8 @@ fake_entities = [
     "Daniel Kessler"
 ]
 
-#print(entity_leakage(fake_text, fake_entities))
+total_leakage, privacy_analysis = entity_leakage([fake_text], fake_entities, 'privacy-leakage.pkl')
+print(f"Number of entities leaked on average per document: {total_leakage}")
 
 t_df, synth_df = pd.DataFrame({'text': [fake_text]}), pd.DataFrame({'text': [fake_text[:100]]})
 text_field = 'text'
