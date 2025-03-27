@@ -14,17 +14,17 @@ class TextQualityEval():
         self.detailed_results = {i: [] for i in metrics}
     
     def calculate_mauve_score(self, df):
-        result = calculate_mauve_score(df, self.args.MauveArgs)
+        result = calculate_mauve_score(df, self.args.mauve)
         self.results['mauve'].append(result[-1])
         self.detailed_results['mauve'].append(result[0])
     
     def calculate_fid_score(self, df):
-        result = calculate_fid_score(df, self.args.FrechetArgs)
+        result = calculate_fid_score(df, self.args.frechet)
         self.results['fid'].append(result[-1])
         self.detailed_results['fid'].append(result[0])
     
     def calculate_perplexity(self, df):
-        result = calculate_perplexity(df, self.args.LMArgs)
+        result = calculate_perplexity(df, self.args.perplexity)
         self.results['synth perplexity'].append(result[1])
         if(len(result)>2):
             self.results['real perplexity'].append(result[-1])

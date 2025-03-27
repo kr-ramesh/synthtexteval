@@ -1,11 +1,5 @@
 from dataclasses import dataclass, field
 from typing import Optional
-
-@dataclass
-class Arguments:
-    FrechetArgs:FrechetArgs
-    MauveArgs:MauveArgs
-    LMArgs:LMArgs
     
 @dataclass
 class BaseArgs:
@@ -67,3 +61,8 @@ class LMArgs(BaseArgs):
     def default_putput_pkl_file_path(self) -> str:
         return 'results/lm-metrics-results.pkl'
     
+@dataclass
+class Arguments:
+    frechet:FrechetArgs
+    mauve:MauveArgs
+    perplexity:LMArgs
