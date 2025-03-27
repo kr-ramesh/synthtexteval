@@ -1,5 +1,5 @@
-import syntheval.generation.controllable.data_utils as data_utils
-import syntheval.generation.controllable.argument_utils as argument_utils
+import synthtexteval.generation.controllable.data_utils as data_utils
+import synthtexteval.generation.controllable.argument_utils as argument_utils
 import numpy as np
 import pandas as pd
 from structure_mimic import structured_format

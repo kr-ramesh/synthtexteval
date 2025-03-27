@@ -1,7 +1,7 @@
 import sys
 import pandas as pd
-from syntheval.eval.text_quality.metrics import TextQualityEval
-from syntheval.eval.text_quality.arguments import MauveArgs, LMArgs, FrechetArgs, Arguments
+from synthtexteval.eval.text_quality.metrics import TextQualityEval
+from synthtexteval.eval.text_quality.arguments import MauveArgs, LMArgs, FrechetArgs, Arguments
 from dataclasses import dataclass
 from datasets import load_from_disk
 

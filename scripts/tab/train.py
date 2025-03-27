@@ -1,10 +1,10 @@
 import sys
 import transformers
-import syntheval.generation.controllable.argument_utils as argument_utils
+import synthtexteval.generation.controllable.argument_utils as argument_utils
 import pandas as pd
-from syntheval.generation.controllable.inference import inference
-from syntheval.generation.controllable.train_generator import train
-from syntheval.generation.controllable.testing_args import set_default_training_args, set_default_config_args
+from synthtexteval.generation.controllable.inference import inference
+from synthtexteval.generation.controllable.train_generator import train
+from synthtexteval.generation.controllable.testing_args import set_default_training_args, set_default_config_args
 
 
 if __name__ == "__main__":

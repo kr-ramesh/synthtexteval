@@ -31,7 +31,7 @@ path_to_save_test_output="${dir_to_save_test_output}/${model_name//\//_}_${datas
 echo $path_to_test_dataset
 echo $path_to_model
 #Enable dry_test_run True to test that it works
-python /home/kramesh3/syntheval/syntheval/generation/controllable/inference.py \
+python /home/kramesh3/synthtexteval/synthtexteval/generation/controllable/inference.py \
         --dry_test_run True \
         --output_dir outputs \
         --disable_dp ${disable_dp} \

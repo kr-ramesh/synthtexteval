@@ -29,7 +29,7 @@ dir_to_save_model="${dir_to_save_model}/${model_name//\//_}_${dataset_name}_DP_$
 echo "Directory to save the model into ${dir_to_save_model}"
 
 #Enable dry_run True to test that it works
-python -m torch.distributed.run --nproc_per_node 4 /home/kramesh3/syntheval/syntheval/generation/controllable/train_generator.py \
+python -m torch.distributed.run --nproc_per_node 4 /home/kramesh3/synthtexteval/synthtexteval/generation/controllable/train_generator.py \
         --output_dir outputs \
         --dry_run True \
         --model_name $model_name \
