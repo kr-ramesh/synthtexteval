@@ -20,3 +20,4 @@ pynvml
 prv-accountant
 tabulate
 pyldavis
+IPython
