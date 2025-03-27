@@ -2,7 +2,7 @@ import re
 import sys
 import pandas as pd
 from datasets import load_from_disk
-from syntheval.eval.privacy.metrics import entity_leakage, search_and_compute_EPO
+from synthtexteval.eval.privacy.metrics import entity_leakage, search_and_compute_EPO
 
 real_texts = load_from_disk(sys.argv[2])
 real_texts = real_texts['train']
