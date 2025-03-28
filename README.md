@@ -41,6 +41,10 @@ SynthTextEval is an open-source library built to enable comprehensive evaluation
 - **Visualization and Descriptive Text Analysis** 📊: Provides tools for visualizing and analyzing key text features like named entities, n-grams, TF-IDF, and topic modeling, providing deeper insights into text structure, diversity, and themes.
 - **Privacy and Memorization** 🔐: Detects memorization in synthetic outputs and language models through privacy evaluations that include canary attacks and entity-based metrics. This is to ensure sensitive information is not inadvertently reproduced and compliance with data regulations is followed.
 
+  <div align="center">
+      <img src="figs/image.png" alt="Architectural Overview of SynthTextEval" width="900"/>
+  </div>
+
 
 ## Repository Structure
 

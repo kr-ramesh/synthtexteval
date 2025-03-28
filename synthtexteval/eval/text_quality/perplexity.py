@@ -17,12 +17,11 @@ def calculate_perplexity(df, args: LMArgs):
     
     texts = df[args.source_text_column].tolist()
     perplexity = load("perplexity", module_type="metric")
-    results = perplexity.compute(predictions=texts, model_id=args.model_name)
+    results = perplexity.compute(predictions=texts, model_id=args.model_name, max_length = 1024)
     
     if(args.ref_text_column):
         perplexity = load("perplexity", module_type="metric")
-        res = perplexity.compute(predictions=df[args.ref_text_column].tolist(), model_id=args.model_name)
+        res = perplexity.compute(predictions=df[args.ref_text_column].tolist(), model_id=args.model_name, max_length = 1024)
         return (results, results['mean_perplexity'], res, res['mean_perplexity'])
 
     return (results, results['mean_perplexity'])
-

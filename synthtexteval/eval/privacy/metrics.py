@@ -1,4 +1,5 @@
 import re
+import os
 import pickle
 import pandas as pd
 from tabulate import tabulate
@@ -58,6 +59,25 @@ def search_and_compute_EPO(synth_file, reference_texts, synth_phrase_file_path, 
     overlap_df = compute_phrase_text_overlap(synth_phrase_file_path, reference_texts, remove_duplicates=remove_duplicates)
 
     return overlap_df
+
+def print_privacy_results(pickle_file):
+    """
+    Read entities from a pickle file. Alternatively, you can directly provide the pickle object to this function
+    """
+    if(isinstance(pickle_file, str)):
+        with open(pickle_file, "rb") as f:
+            private_entity_dict = pickle.load(f)
+    else:
+        private_entity_dict = pickle_file
+    
+    leaked_entities, total_leaked_count = [] , 0
+    for index, text in enumerate(private_entity_dict.keys()):
+        leaked_entities = leaked_entities + [entity for entity in private_entity_dict[text][0].keys() if(private_entity_dict[text][0][entity])==True]
+        total_leaked_count += private_entity_dict[text][1]
+
+    print(f"Average number of entities leaked per document: {(total_leaked_count/len(private_entity_dict)):.2f}")
+    print(f"Average number of unique entities leaked per document: {(len(leaked_entities)/len(private_entity_dict)):.2f}")
+    print(f"Number of unique entities leaked: {len(set(leaked_entities))}")
 
 
 # Helper functions
@@ -183,6 +203,40 @@ def compute_phrase_text_overlap(synth_file_path, reference_texts, remove_duplica
         print(tabulate(match_count, headers='keys', tablefmt='psql', showindex=False))
 
 # Alternate version
+def search_and_compute_EPO_deprecated(synth_file, ref_file, synth_phrase_file_path, 
+                           ref_phrase_file_path, entity_patterns, max_window_len=4, 
+                           remove_duplicates=True, text_field = 'output_text'):
+
+    """
+    Searches and computes the Entity Phrase Overlap (EPO).
+    The Entity Phrase Overlap is a metric that quantifies the overlap of phrases containing specific entities
+    between a synthetic file and a reference file.
+    We define a context window around the matched entities to capture the surrounding text, which helps in understanding
+    the context in which the entities are mentioned and memorized.
+
+    Args:
+        synth_file (str): Path or Pandas DataFrame to the synthetic file containing text 
+        ref_file (str): Path or Pandas DataFrame to the reference file containing text.
+        synth_phrase_file_path (str): Path to save the synthetic file with matched phrases and context lengths.
+    
+    Returns:
+        pd.DataFrame: A DataFrame containing the overlap count and ratio for each context length.
+    
+    """
+
+    # Search for phrases in the synthetic file
+    if(not os.path.exists(synth_phrase_file_path)):
+        print("Searching for entity phrases in the synthetic data...")
+        df = search_phrase_text(synth_file, entity_patterns, save_file_path=synth_phrase_file_path, max_window_len=max_window_len, text_field=text_field)
+    # Search for phrases in the reference file
+    if(not os.path.exists(ref_phrase_file_path)):
+        print("Searching for entity phrases in the real data...")
+        ref_df = search_phrase_text(ref_file, entity_patterns, save_file_path=ref_phrase_file_path, max_window_len=max_window_len, text_field='text')
+
+    # Compute the overlap between the synthetic and reference files
+    overlap_df = compute_phrase_text_overlap_deprecated(synth_phrase_file_path, ref_phrase_file_path, remove_duplicates=remove_duplicates)
+    return overlap_df
+
 def compute_phrase_text_overlap_deprecated(synth_file_path, ref_file_path, remove_duplicates=True):
 
     """
@@ -205,8 +259,18 @@ def compute_phrase_text_overlap_deprecated(synth_file_path, ref_file_path, remov
         if(remove_duplicates):
             # Remove duplicates from each dataframe
             i.drop_duplicates(subset=['Entity', 'Phrase', 'Context Length'], inplace=True)
+    
+    def word_count(text):
+        return len(text.split())
+    
+    def contains_numeric_entity(entities):
+        return entities.isdigit()
 
     overlap_df = pd.merge(ref_df, df, on=['Entity', 'Phrase', 'Context Length'], how='inner')
+    overlap_df = overlap_df[overlap_df.apply(lambda row: word_count(row['Phrase']) == 2 * row['Context Length'] + len(row['Entity'].split()), axis=1)]
+
+    #overlap_df = overlap_df[~overlap_df['Entity'].apply(contains_numeric_entity)]
+
     overlap_count = overlap_df.groupby('Context Length').size().reset_index(name='Overlap Count')
     total_count = ref_df.groupby('Context Length').size().reset_index(name='Total Count')
 
