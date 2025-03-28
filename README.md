@@ -1,6 +1,6 @@
 ## SynthTextEval: A Toolkit for Generating and Evaluating Synthetic Data Across Domains
 
-<a href="https://colab.research.google.com/drive/1pM3Y0DGYAY2ocSismwOmshIJlWwC5WQW?usp=sharing" alt="Colab">
+<a href="https://colab.research.google.com/drive/1560ZtN9JuRGWVYFAUn2ynkWI2DU_zrz_?usp=sharing" alt="Colab">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 
 ## Contents

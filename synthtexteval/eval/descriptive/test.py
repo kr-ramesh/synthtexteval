@@ -9,7 +9,7 @@ t1 = [
 
 t2 = [
     "This is the first text.",
-    "Here comes the second one.",
+    "Here comes the second.",
     "The third text is somewhat longer compared to the first two."
 ]
 
