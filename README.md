@@ -13,7 +13,7 @@
     - [Introduction to SynthTextEval](#introduction-to-synthtexteval)
       - [Overview](#overview)
       - [Key Features of SynthTextEval](#key-features-of-synthtexteval)
-      - [Visual Evaluation Interface](#visual-evaluation-interface)
+    - [Visual Evaluation Interface](#visual-evaluation-interface)
     - [Repository Structure](#repository-structure)
     - [Installation Instructions](#installation-instructions)
       - [Setting up the environment](#setting-up-the-environment)
@@ -50,17 +50,33 @@ SynthTextEval is an open-source library built to enable comprehensive evaluation
       <img src="figs/image.png" alt="Architectural Overview of SynthTextEval" width="900"/>
   </div>
 
-### Visual Evaluation Interface
+## Visual Evaluation Interface
 
 Our GUI lets domain experts explore and annotate synthetic and real text samples, supporting more nuanced, qualitative evaluation.
+
+<p>
+  <a href="https://syntheticreview.cdhai.com/" style="text-decoration:none;">
+    <img src="https://img.shields.io/badge/🌐%20Try%20the%20Live%20Demo-blueviolet" alt="Try Live Demo"/>
+  </a>
+</p>
 
 **Key Features:**
 - 🔍 Text Similarity Exploration: For any given synthetic text, display the most similar real text side-by-side.
 - 🏷️ Entity-Based Comparison: For synthetic texts containing named entities, view real texts that contain the same entity.
 - 📝 Annotation & Feedback: Write, save, and share free-form comments on text samples to support collaborative qualitative review.
 
-[🌐 Try the Live Demo](https://syntheticreview.cdhai.com/) &nbsp;|&nbsp; [⬇️ Download Interface]()
+### ⬇️ Interface Downloads
 
+| Platform                | Download Link                                                                                   |
+|-------------------------|:----------------------------------------------------------------------------------------------:|
+| 🖥️ **Mac (arm64)**      | [Download for Mac arm64](https://drive.google.com/file/d/1Uoyd3yoTJQLJ8LoOl0e6BdahCpDSbpWv/view?usp=drive_link)        |
+| 🪟 **Windows (x64)**     | [Download for Windows x64](https://drive.google.com/file/d/15SY-pdPboI4de01xsu0u9TsdTqN8-kvF/view)                     |
+| 🪟 **Windows (arm64)**   | [Download for Windows arm64](https://drive.google.com/file/d/1aRXnuNdo8fr87Um_rC7CXysh137G9XMI/view?usp=drive_link)    |
+
+
+ <div align="center">
+      <img src="https://github.com/user-attachments/assets/59b99596-e9d2-4cfd-9893-b684afe39e57" alt="Synthetic Text Review GUI Tool" width="900"/>
+  </div>
 
 ---
 ## Repository Structure
@@ -425,3 +441,15 @@ sh inf.sh "inference.csv" "gpt2" "models/gpt2_DP_" "tab" None "dataset/test.csv"
 ```
 ---
 ## Citations
+
+If you use SynthTextEval in your research or project, please cite:
+
+```bibtex
+@misc{SynthTextEval2025,
+  title     = {SynthTextEval: Synthetic Text Data Generation and Evaluation for High-Stakes Domains},
+  author    = {Krithika Ramesh and Nupoor Gandhi and Daniel Smolyak and Zihao Zhao and Ritu Agarwal and Margrét Bjarnadóttir and Anjalie Field},
+  year      = {2025},
+  url       = {https://github.com/kr-ramesh/SynthTextEval},
+}
+```
+## Contributors
