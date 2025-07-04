@@ -9,6 +9,7 @@
     - [Introduction to SynthTextEval](#introduction-to-synthtexteval)
       - [Overview](#overview)
       - [Key Features of SynthTextEval](#key-features-of-synthtexteval)
+      - [Visual Evaluation Interface](#visual-evaluation-interface)
     - [Repository Structure](#repository-structure)
     - [Installation Instructions](#installation-instructions)
       - [Setting up the environment](#setting-up-the-environment)
@@ -45,7 +46,21 @@ SynthTextEval is an open-source library built to enable comprehensive evaluation
       <img src="figs/image.png" alt="Architectural Overview of SynthTextEval" width="900"/>
   </div>
 
+### Visual Evaluation Interface
 
+Our GUI lets domain experts explore and annotate synthetic and real text samples, supporting more nuanced, qualitative evaluation.
+
+**Key Features:**
+- 🔍 Text Similarity Exploration: For any given synthetic text, display the most similar real text side-by-side.
+- 🏷️ Entity-Based Comparison: For synthetic texts containing named entities, view real texts that contain the same entity.
+- 📝 Annotation & Feedback: Write, save, and share free-form comments on text samples to support collaborative qualitative review.
+
+---
+
+[🌐 Try the Live Demo](https://syntheticreview.cdhai.com/) &nbsp;|&nbsp; [⬇️ Download Interface]()
+
+
+---
 ## Repository Structure
 
 The following is a condensed structure of our repository and the functionality it enables.
@@ -79,7 +94,7 @@ synthtexteval
 |____setup.py
 
 ```
-
+---
 ## Installation Instructions:
 
 The package can be installed directly through pip:
@@ -106,6 +121,7 @@ To set up the directories, run the ```scripts/download_data/setup_dir.sh``` scri
 
 The ```scripts/``` folder also includes demo scripts, which are also available in a more general form within their corresponding subdirectories.
 
+---
 ## Evaluation Pipeline:
 
 ## Generating Descriptive Statistics
@@ -127,7 +143,7 @@ desc_analyze._topic_modeling_display()
 desc_analyze._compute_tfidf()
 desc_analyze._ngram_frequency()
 ```
-
+---
 ## Evaluating Downstream Utility
 
 ### Classification
@@ -265,7 +281,7 @@ python run_coref_comparison.py \
         --top_lambda=0.4  \
         --tensorboard_dir=$temp_output_dir/tb
 ```
-
+---
 ## Fairness Evaluation
 
 Assessing fairness is crucial when evaluating synthetic text models. The analyze_group_fairness_performance() function helps analyze performance disparities across subgroups. The user can define any categorical column in their dataframe as the subgroup_type.
@@ -287,6 +303,7 @@ The tabulated results include:
 - Evaluation of the classifier's accuracy, precision, recall, and F1-score per subgroup.
 - Fairness metric scores that quantify disparities in model performance across different subgroups.
 
+---
 ## Privacy Evaluation
 
 Assuming the user already has access to a list of private entities from their original data, we can conduct a privacy evaluation as follows:
@@ -317,6 +334,7 @@ search_and_compute_EPO(synth_file = #  Path to dataframe with synthetic text
 
 We also provide functionality to conduct canary-based evaluations for evaluating leakage in the generative model. Further details are provided in the ```eval.privacy``` subdirectory.
 
+---
 ## Qualitative Evaluation
 
 We can evaluate the quality of synthetic text by comparing it against real-world samples using the Fréchet Inception Distance, MAUVE, and perplexity metrics.
@@ -340,7 +358,7 @@ qual_eval.calculate_fid_score(df)     # Frechet Inception Distance (FID)
 qual_eval.calculate_mauve_score(df)   # MAUVE Score for distribution similarity
 qual_eval.calculate_perplexity(df)    # Perplexity score for fluency
 ```
-
+---
 ## Training the Model to Generate Synthetic Data
 
 We provide functionality to train models to generate synthetic data using control codes, allowing for the generation of synthetic text with controllable attributes specified by the user. We provide a script to train the model in the ```generation/controllable``` subdirectory, which accepts the following arguments (some of which are optional) (further details regarding the arguments are specified in the ```generation/controllable``` subdirectory):
@@ -376,7 +394,7 @@ Our training script provides the functionality to train models with differential
 ```python
 sh train.sh "gpt2" "models/gpt_DP_" false 8 "tab" "dataset.csv" 5 64 false "" true
 ```
-
+---
 ## Generating Synthetic Data
 
 
@@ -403,4 +421,5 @@ We also provide a script to run inference in the ```generation/controllable``` s
 # Example:
 sh inf.sh "inference.csv" "gpt2" "models/gpt2_DP_" "tab" None "dataset/test.csv" true "inf" true
 ```
+---
 ## Citations
