@@ -2,6 +2,10 @@
 
 <a href="https://colab.research.google.com/drive/1560ZtN9JuRGWVYFAUn2ynkWI2DU_zrz_?usp=sharing" alt="Colab">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://syntheticreview.cdhai.com/">
+    <img src="https://img.shields.io/badge/🌐%20Live%20Demo%20of%20GUI-blueviolet" alt="Live Demo of GUI"/></a>
+
+
 
 ## Contents
 - [SynthTextEval: A Toolkit for Generating and Evaluating Synthetic Data Across Domains](#synthtexteval-a-toolkit-for-generating-and-evaluating-synthetic-data-across-domains)
