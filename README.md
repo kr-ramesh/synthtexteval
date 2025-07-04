@@ -55,8 +55,6 @@ Our GUI lets domain experts explore and annotate synthetic and real text samples
 - 🏷️ Entity-Based Comparison: For synthetic texts containing named entities, view real texts that contain the same entity.
 - 📝 Annotation & Feedback: Write, save, and share free-form comments on text samples to support collaborative qualitative review.
 
----
-
 [🌐 Try the Live Demo](https://syntheticreview.cdhai.com/) &nbsp;|&nbsp; [⬇️ Download Interface]()
 
 
