@@ -447,7 +447,7 @@ If you use SynthTextEval in your research or project, please cite:
 ```bibtex
 @misc{SynthTextEval2025,
   title     = {SynthTextEval: Synthetic Text Data Generation and Evaluation for High-Stakes Domains},
-  author    = {Krithika Ramesh and Nupoor Gandhi and Daniel Smolyak and Zihao Zhao and Ritu Agarwal and Margrét Bjarnadóttir and Anjalie Field},
+  author    = {Krithika Ramesh, Daniel Smolyak, Zihao Zhao, Nupoor Gandhi, Ritu Agarwal, Margrét Bjarnadóttir, Anjalie Field},
   year      = {2025},
   url       = {https://github.com/kr-ramesh/SynthTextEval},
 }
