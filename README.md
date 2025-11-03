@@ -4,8 +4,8 @@
     <img src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 <a href="https://syntheticreview.cdhai.com/">
     <img src="https://img.shields.io/badge/🌐%20Live%20Demo%20of%20GUI-blueviolet" alt="Live Demo of GUI"/></a>
-
-
+<a href="https://aclanthology.org/2025.emnlp-demos.35/" target="_blank" rel="noopener noreferrer"> <img src="https://img.shields.io/badge/EMNLP%20System%20Demo-2025-blue?logo=acl&logoColor=white" alt="EMNLP Demo 2025" style="margin-right:8px; vertical-align:middle;" /></a>
+<a href="https://arxiv.org/abs/2507.07229" target="_blank" rel="noopener noreferrer"> <img src="https://img.shields.io/badge/arXiv-2507.07229-red?logo=arxiv&logoColor=white" alt="arXiv:2507.07229" style="margin-right:8px; vertical-align:middle;" /></a>
 
 ## Contents
 - [SynthTextEval: A Toolkit for Generating and Evaluating Synthetic Data Across Domains](#synthtexteval-a-toolkit-for-generating-and-evaluating-synthetic-data-across-domains)
@@ -445,11 +445,29 @@ sh inf.sh "inference.csv" "gpt2" "models/gpt2_DP_" "tab" None "dataset/test.csv"
 If you use SynthTextEval in your research or project, please cite:
 
 ```bibtex
-@misc{SynthTextEval2025,
-  title     = {SynthTextEval: Synthetic Text Data Generation and Evaluation for High-Stakes Domains},
-  author    = {Krithika Ramesh, Daniel Smolyak, Zihao Zhao, Nupoor Gandhi, Ritu Agarwal, Margrét Bjarnadóttir, Anjalie Field},
-  year      = {2025},
-  url       = {https://github.com/kr-ramesh/SynthTextEval},
+@inproceedings{ramesh-etal-2025-synthtexteval,
+    title = "{S}ynth{T}ext{E}val: Synthetic Text Data Generation and Evaluation for High-Stakes Domains",
+    author = "Ramesh, Krithika  and
+      Smolyak, Daniel  and
+      Zhao, Zihao  and
+      Gandhi, Nupoor  and
+      Agarwal, Ritu  and
+      Bjarnad{\'o}ttir, Margr{\'e}t V.  and
+      Field, Anjalie",
+    editor = {Habernal, Ivan  and
+      Schulam, Peter  and
+      Tiedemann, J{\"o}rg},
+    booktitle = "Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing: System Demonstrations",
+    month = nov,
+    year = "2025",
+    address = "Suzhou, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.emnlp-demos.35/",
+    pages = "487--499",
+    ISBN = "979-8-89176-334-0",
+    abstract = "We present SynthTextEval, a toolkit for conducting comprehensive evaluations of synthetic text. The fluency of large language model (LLM) outputs has made synthetic text potentially viable for numerous applications, such as reducing the risks of privacy violations in the development and deployment of AI systems in high-stakes domains. Realizing this potential, however, requires principled consistent evaluations of synthetic data across multiple dimensions: its utility in downstream systems, the fairness of these systems, the risk of privacy leakage, general distributional differences from the source text, and qualitative feedback from domain experts. SynthTextEval allows users to conduct evaluations along all of these dimensions over synthetic data that they upload or generate using the toolkit{'}s generation module. While our toolkit can be run over any data, we highlight its functionality and effectiveness over datasets from two high-stakes domains: healthcare and law. By consolidating and standardizing evaluation metrics, we aim to improve the viability of synthetic text, and in-turn, privacy-preservation in AI development."
 }
 ```
 ## Contributors
+
+A special thank you to Tianli Xu for developing the visual evaluation interface!
